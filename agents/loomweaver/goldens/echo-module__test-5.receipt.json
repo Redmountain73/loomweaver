@@ -1,0 +1,1 @@
+{"ask":[],"callGraph":[],"engine":"interpreter","env":{"echo":"Bob","name":"Bob"},"logs":[],"steps":[{"event":"make","name":"echo","rawVerb":null,"value":"Bob","verb":"Make"},{"event":"return","rawVerb":null,"value":"Bob","verb":"Return"}]}
