@@ -1,0 +1,13 @@
+{
+  "engine": "vm",
+  "module": {
+    "hash": "sha256:1bcf7d0d99152520442541767da6d82f531c65c1c99d4601f097a1ac426e4934",
+    "path": "Modules\\vm_choose_repeat_call.loom"
+  },
+  "reason": "Repeat requires iterator name and iterable expression",
+  "run": {
+    "timestamp": "2025-08-31T22:33:52Z",
+    "uuid": "38c65203-f9f4-4554-bb2b-fabee0568037"
+  },
+  "status": "error"
+}

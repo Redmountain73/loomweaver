@@ -1,0 +1,16 @@
+I. Module: Factorial
+    A. Purpose: Compute n!
+    B. Inputs
+        1. n: number
+    C. Outputs
+        1. result: number
+    D. Flow
+        1. Check n >= 0
+        2. Make result = 1
+        3. Repeat i in 1..n
+            a. Make result = result * i
+        4. Return result
+    E. Tests
+        1. input: n = 5
+        2. expectedOutput: 120
+    F. Version: 0.1

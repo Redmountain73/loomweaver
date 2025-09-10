@@ -1,0 +1,6 @@
+digraph LoomCalls {
+  rankdir=LR;
+  "CallGreeting";
+  "Greeting";
+  "CallGreeting" -> "Greeting";
+}

@@ -1,0 +1,201 @@
+{
+  "version": "0.2",
+  "purpose": "Comprehensive Synonym → Canonical mapping rules for Loom AST Builder",
+
+  "verbs": {
+    "Make": [
+      "make",
+      "build",
+      "create",
+      "generate",
+      "construct",
+      "produce",
+      "assemble",
+      "manufacture",
+      "form"
+    ],
+    "Show": [
+      "show",
+      "display",
+      "render",
+      "output",
+      "present",
+      "illustrate",
+      "demonstrate",
+      "highlight",
+      "exhibit"
+    ],
+    "Check": [
+      "check",
+      "verify",
+      "validate",
+      "ensure",
+      "assert",
+      "confirm",
+      "test",
+      "evaluate",
+      "inspect"
+    ],
+    "Try": [
+      "try",
+      "attempt",
+      "test",
+      "execute",
+      "run",
+      "sample",
+      "experiment",
+      "probe"
+    ],
+    "Choose": [
+      "choose",
+      "select",
+      "pick",
+      "decide",
+      "determine",
+      "elect",
+      "opt",
+      "adopt"
+    ],
+    "Repeat": [
+      "repeat",
+      "loop",
+      "iterate",
+      "cycle",
+      "for",
+      "while",
+      "again",
+      "recur",
+      "do over"
+    ],
+    "Ask": [
+      "ask",
+      "query",
+      "request",
+      "prompt",
+      "question",
+      "consult",
+      "inquire"
+    ],
+    "Return": [
+      "return",
+      "yield",
+      "give back",
+      "output",
+      "deliver",
+      "respond with",
+      "provide"
+    ],
+    "Remember": [
+      "remember",
+      "store",
+      "save",
+      "cache",
+      "persist",
+      "record",
+      "retain",
+      "archive"
+    ],
+    "Forget": [
+      "forget",
+      "delete",
+      "remove",
+      "discard",
+      "drop",
+      "clear",
+      "erase",
+      "purge"
+    ]
+  },
+
+  "resultTypes": {
+    "Text": [
+      "text",
+      "string",
+      "str",
+      "words",
+      "sentence",
+      "label",
+      "line",
+      "paragraph",
+      "description"
+    ],
+    "Number": [
+      "number",
+      "int",
+      "integer",
+      "float",
+      "double",
+      "decimal",
+      "count",
+      "quantity",
+      "value"
+    ],
+    "Yes/No": ["yes/no", "bool", "boolean", "true/false", "binary", "flag"],
+    "List": [
+      "list",
+      "array",
+      "collection",
+      "sequence",
+      "set",
+      "series",
+      "group",
+      "queue"
+    ],
+    "Record": ["record", "object", "dict", "map", "struct", "entry", "row"],
+    "File": ["file", "document", "blob", "binary", "upload", "attachment"],
+    "Image": ["image", "picture", "photo", "graphic", "illustration", "icon"],
+    "Audio": ["audio", "sound", "voice", "music", "clip", "track"],
+    "Video": ["video", "clip", "movie", "reel", "footage", "recording"],
+    "Dataset": [
+      "dataset",
+      "table",
+      "dataframe",
+      "csv",
+      "spreadsheet",
+      "matrix"
+    ],
+    "Visualization": [
+      "visualization",
+      "chart",
+      "graph",
+      "plot",
+      "diagram",
+      "figure"
+    ],
+    "Scene": ["scene", "stage", "setting", "environment", "context"],
+    "Script": ["script", "code", "play", "routine", "sketch"],
+    "Chapter": ["chapter", "section", "part", "installment"],
+    "Character": ["character", "persona", "role", "avatar", "actor"],
+    "Arc": ["arc", "journey", "progression", "path"],
+    "Plot": ["plot", "storyline", "narrative", "framework"],
+    "Plan": ["plan", "strategy", "scheme", "design", "blueprint", "roadmap"],
+    "Instruction": ["instruction", "command", "directive", "guideline", "rule"],
+    "Story": ["story", "tale", "narrative", "scenario", "account"],
+    "Poem": ["poem", "verse", "stanza", "rhyme", "sonnet", "haiku"],
+    "Song": ["song", "music", "melody", "tune", "chorus", "ballad"],
+    "Lyric": ["lyric", "lyrics", "verse", "line"],
+    "Summary": ["summary", "abstract", "recap", "digest", "overview", "brief"],
+    "Outline": ["outline", "sketch", "framework", "structure"],
+    "Workflow": ["workflow", "process", "pipeline", "procedure", "method"],
+    "Report": ["report", "log", "write-up", "document", "paper"],
+    "Log": ["log", "journal", "ledger", "record", "trace"],
+    "Receipt": ["receipt", "invoice", "bill", "acknowledgement"],
+    "Recommendation": ["recommendation", "suggestion", "advice", "proposal"],
+    "Schedule": ["schedule", "calendar", "timeline", "agenda", "program"],
+    "Profile": ["profile", "bio", "biography", "resume", "cv"],
+    "Configuration": [
+      "configuration",
+      "settings",
+      "options",
+      "parameters",
+      "preferences"
+    ],
+    "Any": ["any", "wildcard", "unknown", "generic"]
+  },
+
+  "identifiers": {
+    "normalizeCase": "lower",
+    "replaceSpaces": "_",
+    "forbiddenTerms": ["Thing", "Stuff", "Whatever", "Info", "Data"]
+  }
+}

@@ -1,0 +1,16 @@
+I. Module: FriendlyHello
+A. Purpose: Say hello using natural sentences
+B. Inputs
+   1. name: text
+C. Outputs
+   1. message: text
+D. Flow
+   1. kindly ask the user for name, fallback "World".
+   2. set message to "Hello, " plus name plus "!".
+   3. return message.
+E. Tests
+   1. input: name = Ada
+   2. expectedOutput: Hello, Ada!
+   3. input: {}
+   4. expectedOutput: Hello, World!
+F. Version: 0.2

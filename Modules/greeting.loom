@@ -1,0 +1,12 @@
+I. Module: Greeting
+A. Purpose: demo
+B. Inputs
+   1. name: text
+C. Outputs
+   1. message: text
+D. Flow
+   1. Return "Hello, " + name + "!"
+E. Tests
+   1. input: name = "Alice"
+   2. expectedOutput: "Hello, Alice!"
+F. Version: 2.1

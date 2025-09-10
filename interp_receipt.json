@@ -1,0 +1,24 @@
+{
+  "ask": [],
+  "callGraph": [],
+  "engine": "interpreter",
+  "env": {
+    "name": "Alice"
+  },
+  "logs": [],
+  "module": {
+    "hash": "sha256:6e9b0174061aafce641efd6a05de84a59300acc7369341965d02ebb67fc2f1e1",
+    "path": "C:\\Users\\Jacl4\\OneDrive\\Documents\\Loom\\Loom vs code files\\Modules\\greeting.loom"
+  },
+  "run": {
+    "timestamp": "2025-08-31T23:15:21Z",
+    "uuid": "32f74c5e-6198-47cb-a460-aad64f5b8aa8"
+  },
+  "steps": [],
+  "verify": {
+    "errors": [],
+    "warnings": [
+      "step 1 (Return): identifier 'name' may be undefined"
+    ]
+  }
+}

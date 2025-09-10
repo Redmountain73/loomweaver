@@ -1,0 +1,6 @@
+{
+  "includes": ["Greeting.loom", "call_greeting.loom"],
+  "aliases": {
+    "Rhizome/Greeting": "Greeting"
+  }
+}

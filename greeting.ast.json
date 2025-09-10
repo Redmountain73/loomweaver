@@ -1,0 +1,40 @@
+{
+  "astVersion": "2.1.0",
+  "flow": [
+    {
+      "args": {
+        "expr": {
+          "left": {
+            "left": {
+              "type": "String",
+              "value": "Hello, "
+            },
+            "op": "+",
+            "right": {
+              "name": "name",
+              "type": "Identifier"
+            },
+            "type": "Binary"
+          },
+          "op": "+",
+          "right": {
+            "type": "String",
+            "value": "!"
+          },
+          "type": "Binary"
+        }
+      },
+      "verb": "Return"
+    }
+  ],
+  "inputs": [
+    {
+      "name": "name",
+      "resultType": "Text"
+    }
+  ],
+  "name": "Greeting",
+  "purpose": "demo",
+  "type": "Module",
+  "version": "2.1"
+}

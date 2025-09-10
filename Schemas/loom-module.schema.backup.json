@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/loom-module.schema.json",
+  "title": "Loom Module",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "name", "flow", "version"],
+  "properties": {
+    "type": {
+      "const": "Module",
+      "description": "Must be 'Module'"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^(?!.*\\b(Thing|Stuff|Whatever|Info|Data)\\b)[A-Za-z_][A-Za-z0-9_\\-]{0,127}$",
+      "description": "Module identifier (forbidden terms disallowed)"
+    },
+    "purpose": { "type": "string" },
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Input" },
+      "default": []
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Output" },
+      "default": []
+    },
+    "flow": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Step" },
+      "minItems": 1
+    },
+    "tests": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Test" },
+      "default": []
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "MAJOR.MINOR"
+    }
+  },
+
+  "$defs": {
+    "ResultType": {
+      "type": "string",
+      "enum": [
+        "Text",
+        "Number",
+        "Yes/No",
+        "List",
+        "Record",
+        "Optional",
+        "File",
+        "Image",
+        "Video",
+        "Audio",
+        "Document",
+        "Dataset",
+        "Visualization",
+        "Scene",
+        "Script",
+        "Chapter",
+        "Character",
+        "Arc",
+        "Plot",
+        "Plan",
+        "Instruction",
+        "Story",
+        "Poem",
+        "Song",
+        "Lyric",
+        "Summary",
+        "Outline",
+        "Workflow",
+        "Report",
+        "Log",
+        "Receipt",
+        "Recommendation",
+        "Schedule",
+        "Profile",
+        "Configuration",
+        "Any"
+      ]
+    },
+
+    "Input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "resultType"],
+      "properties": {
+        "name": { "type": "string" },
+        "resultType": { "$ref": "#/$defs/ResultType" }
+      }
+    },
+    "Output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "resultType"],
+      "properties": {
+        "name": { "type": "string" },
+        "resultType": { "$ref": "#/$defs/ResultType" }
+      }
+    },
+    "Expr": {
+      "description": "Loose JSON value used for expressions/values; can be refined later",
+      "anyOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "number" },
+        { "type": "string" },
+        { "type": "array", "items": { "$ref": "#/$defs/Expr" } },
+        { "type": "object", "additionalProperties": { "$ref": "#/$defs/Expr" } }
+      ]
+    },
+    "Step": {
+      "type": "object",
+      "required": ["verb"],
+      "properties": {
+        "verb": {
+          "enum": [
+            "Make",
+            "Show",
+            "Check",
+            "Try",
+            "Choose",
+            "Repeat",
+            "Ask",
+            "Return",
+            "Remember",
+            "Forget"
+          ]
+        },
+        "args": { "type": "object" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Step" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "Test": {
+      "type": "object",
+      "required": ["input", "expectedOutput"],
+      "properties": {
+        "input": { "type": "object" },
+        "expectedOutput": {}
+      }
+    }
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "modules": [
+    {
+      "type": "Module",
+      "name": "Greeting Module",
+      "purpose": "Generate a friendly greeting. Maintain warmth and clarity.",
+      "inputs": [
+        "name (Text)"
+      ],
+      "outputs": [
+        "message (Text)"
+      ],
+      "flow": [
+        {
+          "verb": "Make",
+          "args": {
+            "var": "message",
+            "expr": {
+              "type": "Identifier",
+              "name": "name"
+            }
+          }
+        },
+        {
+          "verb": "Choose",
+          "args": {
+            "branches": [
+              {
+                "when": {
+                  "type": "Binary",
+                  "op": "==",
+                  "left": {
+                    "type": "Identifier",
+                    "name": "name"
+                  },
+                  "right": {
+                    "type": "String",
+                    "value": ""
+                  }
+                },
+                "steps": [
+                  {
+                    "verb": "Return",
+                    "args": {
+                      "expr": {
+                        "type": "String",
+                        "value": "anonymous user"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "otherwise": true,
+                "steps": [
+                  {
+                    "verb": "Return",
+                    "args": {
+                      "expr": {
+                        "type": "Identifier",
+                        "name": "message"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "successCriteria": [
+        "Always return a greeting string.",
+        "Never fail silently."
+      ],
+      "version": "1.0",
+      "astVersion": "2.1.0",
+      "examples": [
+        "Example dialogue: User: \"hi\" → Output: \"Hello, hi!\""
+      ]
+    },
+    {
+      "type": "Module",
+      "name": "Score Gate Module",
+      "purpose": "Evaluate a numeric score. Produce a simple pass/fail verdict.",
+      "inputs": [
+        "score (Number)"
+      ],
+      "outputs": [
+        "verdict (Text)"
+      ],
+      "flow": [
+        {
+          "verb": "Choose",
+          "args": {
+            "branches": [
+              {
+                "when": {
+                  "type": "Binary",
+                  "op": ">=",
+                  "left": {
+                    "type": "Identifier",
+                    "name": "score"
+                  },
+                  "right": {
+                    "type": "Number",
+                    "value": 90
+                  }
+                },
+                "steps": [
+                  {
+                    "verb": "Return",
+                    "args": {
+                      "expr": {
+                        "type": "String",
+                        "value": "pass"
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "otherwise": true,
+                "steps": [
+                  {
+                    "verb": "Return",
+                    "args": {
+                      "expr": {
+                        "type": "String",
+                        "value": "fail"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "successCriteria": [
+        "Numeric comparison uses thresholds as written.",
+        "Output is always one of: \"pass\", \"fail\"."
+      ],
+      "version": "1.0",
+      "astVersion": "2.1.0",
+      "examples": []
+    },
+    {
+      "type": "Module",
+      "name": "Echo Module",
+      "purpose": "Echo back a provided name. Stay minimal and deterministic.",
+      "inputs": [
+        "name (Text)"
+      ],
+      "outputs": [
+        "echo (Text)"
+      ],
+      "flow": [
+        {
+          "verb": "Make",
+          "args": {
+            "var": "echo",
+            "expr": {
+              "type": "Identifier",
+              "name": "name"
+            }
+          }
+        },
+        {
+          "verb": "Return",
+          "args": {
+            "expr": {
+              "type": "Identifier",
+              "name": "echo"
+            }
+          }
+        }
+      ],
+      "successCriteria": [],
+      "version": "1.0",
+      "astVersion": "2.1.0",
+      "examples": []
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "modules": [
+    {
+      "name": "Greeting Module",
+      "purposeAndIdentity": [
+        "Generate a friendly greeting.",
+        "Maintain warmth and clarity."
+      ],
+      "inputs": [
+        "name (Text)"
+      ],
+      "outputs": [
+        "message (Text)"
+      ],
+      "flowLines": [
+        "make message say the user’s name",
+        "if the user has no name then return \"anonymous user\"",
+        "otherwise return message"
+      ],
+      "tests": [
+        "Input: Alice → Output: \"Hello, Alice!\"",
+        "Input: (no name) → Output: \"anonymous user\""
+      ],
+      "successCriteria": [
+        "Always return a greeting string.",
+        "Never fail silently."
+      ],
+      "version": "1.0",
+      "astVersion": "2.1.0",
+      "examples": [
+        "Example dialogue: User: \"hi\" → Output: \"Hello, hi!\""
+      ]
+    },
+    {
+      "name": "Score Gate Module",
+      "purposeAndIdentity": [
+        "Evaluate a numeric score.",
+        "Produce a simple pass/fail verdict."
+      ],
+      "inputs": [
+        "score (Number)"
+      ],
+      "outputs": [
+        "verdict (Text)"
+      ],
+      "flowLines": [
+        "if score is at least 90 then return \"pass\"",
+        "otherwise return \"fail\""
+      ],
+      "tests": [
+        "Input: 95 → Output: \"pass\"",
+        "Input: 42 → Output: \"fail\""
+      ],
+      "successCriteria": [
+        "Numeric comparison uses thresholds as written.",
+        "Output is always one of: \"pass\", \"fail\"."
+      ],
+      "version": "1.0",
+      "astVersion": "2.1.0",
+      "examples": []
+    },
+    {
+      "name": "Echo Module",
+      "purposeAndIdentity": [
+        "Echo back a provided name.",
+        "Stay minimal and deterministic."
+      ],
+      "inputs": [
+        "name (Text)"
+      ],
+      "outputs": [
+        "echo (Text)"
+      ],
+      "flowLines": [
+        "make echo say name, then return echo"
+      ],
+      "tests": [
+        "Input: Bob → Output: \"Bob\""
+      ],
+      "successCriteria": [],
+      "version": "1.0",
+      "astVersion": "2.1.0",
+      "examples": []
+    }
+  ]
+}

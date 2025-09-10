@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/loom-capabilities.schema.json",
+  "title": "Loom Program Capabilities (v0)",
+  "type": "object",
+  "required": ["type", "programName", "rules", "resources"],
+  "properties": {
+    "type": { "const": "Capabilities" },
+    "programName": { "type": "string" },
+    "rules": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["from", "to", "allow"],
+        "properties": {
+          "from": {
+            "type": "string",
+            "description": "Module name (exact) or '*'"
+          },
+          "to": {
+            "type": "string",
+            "description": "Module name (exact) or '*'"
+          },
+          "allow": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "enum": ["Call", "Ask"] }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "resources": {
+      "type": "object",
+      "properties": {
+        "net": { "type": "boolean", "default": false },
+        "fs": { "type": "boolean", "default": false }
+      },
+      "additionalProperties": false,
+      "default": { "net": false, "fs": false }
+    }
+  },
+  "additionalProperties": false
+}

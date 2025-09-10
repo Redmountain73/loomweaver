@@ -1,0 +1,64 @@
+{
+  "type": "Module",
+  "name": "Greeting",
+  "version": "0.1",
+  "purpose": "Greet a user by name",
+  "inputs": [
+    {
+      "name": "name",
+      "resultType": "Text"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "message",
+      "resultType": "Text"
+    }
+  ],
+  "flow": [
+    {
+      "verb": "Make",
+      "args": {
+        "name": "message",
+        "expr": {
+          "type": "Binary",
+          "op": "+",
+          "left": {
+            "type": "String",
+            "value": "Hello, "
+          },
+          "right": {
+            "type": "Binary",
+            "op": "+",
+            "left": {
+              "type": "Identifier",
+              "name": "name"
+            },
+            "right": {
+              "type": "String",
+              "value": "!"
+            }
+          }
+        }
+      }
+    },
+    {
+      "verb": "Return",
+      "args": {
+        "expr": {
+          "type": "Identifier",
+          "name": "message"
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "input": {
+        "name": "Alice"
+      },
+      "expectedOutput": "Hello, Alice!"
+    }
+  ],
+  "astVersion": "2.1.0"
+}

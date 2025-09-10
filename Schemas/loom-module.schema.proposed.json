@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/loom-module.schema.proposed.json",
+  "title": "Loom Module (with successCriteria + examples) — PROPOSED",
+  "type": "object",
+  "allOf": [{ "$ref": "loom-module.schema.json" }],
+  "properties": {
+    "successCriteria": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "examples": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["description"],
+        "properties": {
+          "description": { "type": "string" },
+          "input": { "type": "object" },
+          "output": {}
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    }
+  }
+}

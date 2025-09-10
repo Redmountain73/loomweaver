@@ -1,0 +1,106 @@
+{
+  "type": "Module",
+  "name": "Factorial",
+  "version": "0.1",
+  "purpose": "Compute n!",
+  "inputs": [
+    {
+      "name": "n",
+      "resultType": "Number"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "result",
+      "resultType": "Number"
+    }
+  ],
+  "flow": [
+    {
+      "verb": "Check",
+      "args": {
+        "expr": {
+          "type": "Binary",
+          "op": ">=",
+          "left": {
+            "type": "Identifier",
+            "name": "n"
+          },
+          "right": {
+            "type": "Number",
+            "value": 0
+          }
+        }
+      }
+    },
+    {
+      "verb": "Make",
+      "args": {
+        "name": "result",
+        "expr": {
+          "type": "Number",
+          "value": 1
+        }
+      }
+    },
+    {
+      "verb": "Repeat",
+      "args": {
+        "iterator": {
+          "type": "Identifier",
+          "name": "i"
+        },
+        "iterable": {
+          "type": "Range",
+          "start": {
+            "type": "Number",
+            "value": 1
+          },
+          "end": {
+            "type": "Identifier",
+            "name": "n"
+          },
+          "inclusive": true
+        }
+      },
+      "steps": [
+        {
+          "verb": "Make",
+          "args": {
+            "name": "result",
+            "expr": {
+              "type": "Binary",
+              "op": "*",
+              "left": {
+                "type": "Identifier",
+                "name": "result"
+              },
+              "right": {
+                "type": "Identifier",
+                "name": "i"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "verb": "Return",
+      "args": {
+        "expr": {
+          "type": "Identifier",
+          "name": "result"
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "input": {
+        "n": 5
+      },
+      "expectedOutput": 120
+    }
+  ],
+  "astVersion": "2.1.0"
+}

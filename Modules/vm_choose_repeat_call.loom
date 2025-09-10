@@ -1,0 +1,20 @@
+I. Module: VMCombo
+A. Purpose: vm choose/repeat/call smoke
+B. Inputs
+   1. who: text
+C. Outputs
+   1. msg: text
+D. Flow
+   1. Choose
+      when who == "boss":
+        Show "Access: admin"
+      else if who == "guest":
+        Show "Access: limited"
+      otherwise:
+        Show "Access: unknown"
+   2. Repeat for i in 1..3:
+        Show i
+   3. Call Greeting with name = "World" save as Out
+   4. Show Out
+   5. Return Out
+F. Version: 2.1

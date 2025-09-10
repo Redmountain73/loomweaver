@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "module": "Greeting Module",
+      "inputs": { "name": "Alice" },
+      "expect": "Alice"
+    },
+    {
+      "module": "Greeting Module",
+      "inputs": { "name": "" },
+      "expect": "anonymous user"
+    },
+    {
+      "module": "Score Gate Module",
+      "inputs": { "score": 95 },
+      "expect": "pass"
+    },
+    {
+      "module": "Score Gate Module",
+      "inputs": { "score": 42 },
+      "expect": "fail"
+    },
+    {
+      "module": "Echo Module",
+      "inputs": { "name": "Bob" },
+      "expect": "Bob"
+    }
+  ]
+}

@@ -1,0 +1,247 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/loom-module.schema.json",
+  "title": "Loom Module (AST v2.1.0)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type", "name", "flow", "version", "astVersion"],
+  "properties": {
+    "type": {
+      "const": "Module",
+      "description": "Must be 'Module'"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^(?!.*\\b(Thing|Stuff|Whatever|Info|Data)\\b)[A-Za-z_][A-Za-z0-9_\\-]{0,127}$",
+      "description": "Module identifier (forbidden terms disallowed)"
+    },
+    "purpose": { "type": "string" },
+    "inputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Input" },
+      "default": []
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Output" },
+      "default": []
+    },
+    "flow": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Step" },
+      "minItems": 1
+    },
+    "tests": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Test" },
+      "default": []
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "MAJOR.MINOR"
+    },
+    "astVersion": {
+      "type": "string",
+      "description": "SemVer of the canonical AST contract",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-[0-9A-Za-z-.]+)?(?:\\+[0-9A-Za-z-.]+)?$"
+    }
+  },
+
+  "$defs": {
+    "ResultType": {
+      "type": "string",
+      "enum": [
+        "Text",
+        "Number",
+        "Yes/No",
+        "List",
+        "Record",
+        "Optional",
+        "File",
+        "Image",
+        "Video",
+        "Audio",
+        "Document",
+        "Dataset",
+        "Visualization",
+        "Scene",
+        "Script",
+        "Chapter",
+        "Character",
+        "Arc",
+        "Plot",
+        "Plan",
+        "Instruction",
+        "Story",
+        "Poem",
+        "Song",
+        "Lyric",
+        "Summary",
+        "Outline",
+        "Workflow",
+        "Report",
+        "Log",
+        "Receipt",
+        "Recommendation",
+        "Schedule",
+        "Profile",
+        "Configuration",
+        "Any"
+      ]
+    },
+
+    "Input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "resultType"],
+      "properties": {
+        "name": { "type": "string" },
+        "resultType": { "$ref": "#/$defs/ResultType" }
+      }
+    },
+
+    "Output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "resultType"],
+      "properties": {
+        "name": { "type": "string" },
+        "resultType": { "$ref": "#/$defs/ResultType" }
+      }
+    },
+
+    "Expr": {
+      "description": "Loose JSON value used for expressions/values; accepts Loom expr AST nodes",
+      "anyOf": [
+        { "type": "null" },
+        { "type": "boolean" },
+        { "type": "number" },
+        { "type": "string" },
+        { "type": "array", "items": { "$ref": "#/$defs/Expr" } },
+        { "type": "object", "additionalProperties": { "$ref": "#/$defs/Expr" } }
+      ]
+    },
+
+    "ChooseBranch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "when": { "$ref": "#/$defs/Expr" },
+        "otherwise": { "type": "boolean", "const": true },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Step" },
+          "minItems": 1
+        }
+      },
+      "oneOf": [
+        { "required": ["when", "steps"], "not": { "required": ["otherwise"] } },
+        { "required": ["otherwise", "steps"], "not": { "required": ["when"] } }
+      ]
+    },
+
+    "Step": {
+      "type": "object",
+      "required": ["verb"],
+      "properties": {
+        "verb": {
+          "enum": [
+            "Make",
+            "Show",
+            "Check",
+            "Try",
+            "Choose",
+            "Repeat",
+            "Ask",
+            "Return",
+            "Remember",
+            "Forget",
+            "Call"
+          ]
+        },
+        "args": { "type": "object" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/Step" }
+        }
+      },
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "verb": { "const": "Choose" } },
+            "required": ["verb"]
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "type": "object",
+                "required": ["branches"],
+                "properties": {
+                  "branches": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": { "$ref": "#/$defs/ChooseBranch" }
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "required": ["args"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "verb": { "const": "Repeat" } },
+            "required": ["verb"]
+          },
+          "then": {
+            "required": ["steps", "args"],
+            "properties": {
+              "args": {
+                "type": "object",
+                "required": ["iterator", "iterable"],
+                "properties": {
+                  "iterator": { "$ref": "#/$defs/Expr" },
+                  "iterable": { "$ref": "#/$defs/Expr" }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "verb": { "const": "Call" } },
+            "required": ["verb"]
+          },
+          "then": {
+            "properties": {
+              "args": {
+                "type": "object",
+                "properties": {
+                  "module": { "type": "string", "minLength": 1 },
+                  "inputs": { "type": "object" },
+                  "result": { "type": "string" }
+                },
+                "required": ["module", "inputs"],
+                "additionalProperties": false
+              }
+            },
+            "required": ["args"]
+          }
+        }
+      ]
+    },
+
+    "Test": {
+      "type": "object",
+      "required": ["input", "expectedOutput"],
+      "properties": {
+        "input": { "type": "object" },
+        "expectedOutput": {}
+      },
+      "additionalProperties": false
+    }
+  }
+}

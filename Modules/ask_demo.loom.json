@@ -1,0 +1,78 @@
+{
+  "type": "Module",
+  "name": "AskDemo",
+  "version": "0.2",
+  "purpose": "Demonstrate Ask with default",
+  "inputs": [
+    {
+      "name": "name",
+      "resultType": "Text"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "message",
+      "resultType": "Text"
+    }
+  ],
+  "flow": [
+    {
+      "verb": "Ask",
+      "args": {
+        "name": "name",
+        "default": {
+          "type": "String",
+          "value": "World"
+        }
+      }
+    },
+    {
+      "verb": "Make",
+      "args": {
+        "name": "message",
+        "expr": {
+          "type": "Binary",
+          "op": "+",
+          "left": {
+            "type": "String",
+            "value": "Hello, "
+          },
+          "right": {
+            "type": "Binary",
+            "op": "+",
+            "left": {
+              "type": "Identifier",
+              "name": "name"
+            },
+            "right": {
+              "type": "String",
+              "value": "!"
+            }
+          }
+        }
+      }
+    },
+    {
+      "verb": "Return",
+      "args": {
+        "expr": {
+          "type": "Identifier",
+          "name": "message"
+        }
+      }
+    }
+  ],
+  "tests": [
+    {
+      "input": {
+        "name": "Alice"
+      },
+      "expectedOutput": "Hello, Alice!"
+    },
+    {
+      "input": {},
+      "expectedOutput": "Hello, World!"
+    }
+  ],
+  "astVersion": "2.1.0"
+}

@@ -1,0 +1,201 @@
+{
+  "version": "0.1",
+  "phase": "Transition from Phase 1 (Language Lock) → Phase 2 (Execution Backbone)",
+
+  "astSchema": {
+    "ModuleRoot": {
+      "type": "Module",
+      "name": "string",
+      "purpose": "string",
+      "inputs": ["Input"],
+      "outputs": ["Output"],
+      "flow": ["Step"],
+      "tests": ["Test"],
+      "version": "string"
+    },
+    "Input": {
+      "name": "string",
+      "resultType": "ResultType"
+    },
+    "Output": {
+      "name": "string",
+      "resultType": "ResultType"
+    },
+    "Step": {
+      "verb": "CanonicalVerb",
+      "args": {},
+      "steps": ["Step (optional)"]
+    },
+    "Examples": [
+      { "verb": "Check", "condition": "n >= 0" },
+      { "verb": "Make", "target": "result", "value": 1 },
+      { "verb": "Return", "value": "result" },
+      {
+        "verb": "Repeat",
+        "iterator": "i",
+        "range": "1..n",
+        "steps": [{ "verb": "Make", "target": "result", "value": "result * i" }]
+      }
+    ],
+    "Test": {
+      "input": { "paramName": "value" },
+      "expectedOutput": "value"
+    },
+    "Version": "MAJOR.MINOR"
+  },
+
+  "canon": {
+    "verbs": {
+      "canonical": [
+        "Make",
+        "Show",
+        "Check",
+        "Try",
+        "Choose",
+        "Repeat",
+        "Ask",
+        "Return",
+        "Remember",
+        "Forget"
+      ],
+      "synonyms": {
+        "Build": "Make",
+        "Emit": "Show",
+        "Validate": "Check",
+        "Fallback": "Try",
+        "Call": "Ask",
+        "Give Back": "Return"
+      },
+      "userIntroduced": ["Shuffle", "Sketch", "Summarize"]
+    },
+    "results": {
+      "core": [
+        "Text",
+        "Number",
+        "Yes/No",
+        "List",
+        "Record",
+        "Optional",
+        "File",
+        "Image",
+        "Video",
+        "Audio",
+        "Document",
+        "Dataset",
+        "Visualization"
+      ],
+      "creative": [
+        "Scene",
+        "Script",
+        "Chapter",
+        "Character",
+        "Arc",
+        "Plot",
+        "Plan",
+        "Instruction",
+        "Story",
+        "Poem",
+        "Song",
+        "Lyric"
+      ],
+      "analytical": [
+        "Summary",
+        "Outline",
+        "Workflow",
+        "Report",
+        "Log",
+        "Receipt",
+        "Recommendation",
+        "Schedule",
+        "Profile",
+        "Configuration"
+      ],
+      "forbidden": ["Thing", "Stuff", "Whatever", "Info", "Data"]
+    }
+  },
+
+  "parserPipeline": [
+    "AST Schema (locked above)",
+    "Tokenizer Spec → Tokenizer Implementation",
+    "Parser Grammar → Parse Tree",
+    "AST Builder",
+    "AST Interpreter (MVP Execution)",
+    "Compiler + Rust LVM",
+    "LoomWeaver Integration"
+  ],
+
+  "tokenizerSpec": {
+    "purpose": "Convert `.loom` outline text into a stream of tokens that preserve meaning + nesting level, discarding outline markers.",
+    "tokenTypes": {
+      "SectionHeaders": [
+        "MODULE",
+        "PURPOSE",
+        "INPUTS",
+        "OUTPUTS",
+        "FLOW",
+        "TESTS",
+        "VERSION"
+      ],
+      "Verbs": [
+        "MAKE",
+        "SHOW",
+        "CHECK",
+        "TRY",
+        "CHOOSE",
+        "REPEAT",
+        "ASK",
+        "RETURN",
+        "REMEMBER",
+        "FORGET"
+      ],
+      "SynonymVerbs": "Normalized later by AST builder",
+      "ResultTypes": [
+        "TEXT",
+        "NUMBER",
+        "YES/NO",
+        "LIST",
+        "RECORD",
+        "OPTIONAL",
+        "FILE",
+        "IMAGE",
+        "VIDEO",
+        "AUDIO",
+        "DOCUMENT",
+        "DATASET",
+        "VISUALIZATION",
+        "SCENE",
+        "SCRIPT",
+        "CHAPTER",
+        "CHARACTER",
+        "ARC",
+        "PLOT",
+        "PLAN",
+        "INSTRUCTION",
+        "STORY",
+        "POEM",
+        "SONG",
+        "LYRIC",
+        "SUMMARY",
+        "OUTLINE",
+        "WORKFLOW",
+        "REPORT",
+        "LOG",
+        "RECEIPT",
+        "RECOMMENDATION",
+        "SCHEDULE",
+        "PROFILE",
+        "CONFIGURATION"
+      ],
+      "Identifiers": "[a-zA-Z_][a-zA-Z0-9_]*",
+      "Literals": ["Numbers", "Strings", "Booleans"],
+      "Operators": ["=", "+", "-", "*", "/", "==", ">=", "<=", "!="],
+      "NestingStructure": "Outline markers (I., A., 1., a., i.) → NEST_LEVEL [1–5]"
+    },
+    "tokenOutputExamples": [
+      { "type": "VERB", "value": "MAKE", "nesting": 3 },
+      { "type": "IDENTIFIER", "value": "result", "nesting": 3 },
+      { "type": "OPERATOR", "value": "=", "nesting": 3 },
+      { "type": "LITERAL", "value": "1", "nesting": 3 }
+    ]
+  }
+}
