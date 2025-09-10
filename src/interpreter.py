@@ -2,21 +2,102 @@
 from __future__ import annotations
 from typing import Any, Dict, List, Tuple, Optional
 from pathlib import Path
+
 from .ast_builder import build_ast
 from .tokenizer import tokenize
 from .parser import parse
 from .names import normalize_module_slug, check_capability
 
-class RuntimeErrorLoom(Exception): pass
+class RuntimeErrorLoom(Exception):
+    pass
+
+# ------------------------------------------------------------
+# Verb normalization: map many human verbs → small canonical set
+# Canonical verbs the VM implements: Make, Show, Return, Ask, Choose, Repeat, Call
+# ------------------------------------------------------------
+VERB_ALIASES = {
+    # assignment
+    "make": "Make", "set": "Make", "let": "Make", "assign": "Make", "define": "Make",
+    # show/log
+    "show": "Show", "print": "Show", "log": "Show", "echo": "Show",
+    # return
+    "return": "Return", "yield": "Return",
+    # ask
+    "ask": "Ask", "prompt": "Ask", "input": "Ask",
+    # choose / if
+    "choose": "Choose", "if": "Choose",
+    # repeat / loop
+    "repeat": "Repeat", "for": "Repeat", "foreach": "Repeat", "foreach": "Repeat", "loop": "Repeat",
+    # call / invoke
+    "call": "Call", "invoke": "Call", "run": "Call", "use": "Call",
+}
+
+def normalize_verb_and_args(step: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[str]]:
+    """Return (canonicalVerb, normalizedArgs, rawVerb). May adapt arg shapes."""
+    raw = (step.get("verb") or "").strip()
+    canon = VERB_ALIASES.get(raw.lower(), raw)
+    args = dict(step.get("args") or {})
+
+    # Shape adapters (accept common outline shapes and normalize)
+    if canon == "Make":
+        # Accept {"target": "x", "expr": {...}} and {"name": "x", "value": ...}
+        if "name" not in args and "target" in args:
+            args["name"] = args.pop("target")
+        # prefer "expr" over "value" for structured expressions
+        # (nothing else to change; evaluator handles dict vs scalar)
+    elif canon == "Show":
+        # Accept {"text": ...} or {"value": ...} → use "expr" slot
+        if "expr" not in args:
+            if "text" in args:
+                args["expr"] = args.get("text")
+            elif "value" in args:
+                args["expr"] = args.get("value")
+    elif canon == "Choose" and "branches" not in args:
+        # Accept If-shape: {"cond": <expr>, "then": [...], "else": [...]}
+        cond = args.pop("cond", None)
+        then_body = args.pop("then", None) or args.pop("thenBody", None)
+        else_body = args.pop("else", None) or args.pop("otherwise", None)
+        branches: List[Dict[str, Any]] = []
+        if cond is not None:
+            branches.append({"when": cond, "steps": then_body or []})
+        branches.append({"steps": else_body or []})  # otherwise
+        args["branches"] = branches
+    elif canon == "Repeat":
+        # Accept For-shape: {"var":"i","in":<iter>} or {"iterator":"i","iterable":...}
+        if "iterator" not in args:
+            if "var" in args:
+                args["iterator"] = args.pop("var")
+            elif "it" in args:
+                args["iterator"] = args.pop("it")
+        if "iterable" not in args:
+            if "in" in args:
+                args["iterable"] = args.pop("in")
+            elif "range" in args:
+                # already okay
+                pass
+        # Accept "body" or raw list as steps
+        if "block" not in args and "steps" not in args and "body" in args:
+            args["block"] = {"steps": args.pop("body")}
+    elif canon == "Call":
+        # Accept lighter shapes: {"module":"X","with":{"k":expr}, "as":"res"}
+        if "inputs" not in args and "with" in args:
+            args["inputs"] = args.pop("with")
+        if "result" not in args:
+            for key in ("as", "saveAs", "save"):
+                if key in args:
+                    args["result"] = args.pop(key)
+                    break
+
+    return canon, args, raw if raw != canon else None
 
 # ------------------------- expression evaluator -------------------------
-
 class Evaluator:
     def __init__(self, env: Dict[str, Any]):
         self.env = env
 
     def eval(self, node: Optional[Dict[str, Any]]) -> Any:
-        if node is None: return None
+        if node is None:
+            return None
         t = node.get("type")
         if t in ("Number", "String", "Boolean"):
             return node.get("value")
@@ -28,9 +109,12 @@ class Evaluator:
         if t == "Unary":
             op = node.get("op")
             v = self.eval(node.get("expr"))
-            if op == "-": return -v
-            if op == "+": return +v
-            if op == "not": return not bool(v)
+            if op == "-":
+                return -v
+            if op == "+":
+                return +v
+            if op == "not":
+                return not bool(v)
             raise RuntimeErrorLoom(f"unknown unary op: {op}")
         if t == "Binary":
             op = node.get("op")
@@ -38,7 +122,8 @@ class Evaluator:
                 l = self.eval(node.get("left"))
                 if not isinstance(l, bool):
                     raise RuntimeErrorLoom("and expects booleans")
-                if not l: return False
+                if not l:
+                    return False
                 r = self.eval(node.get("right"))
                 if not isinstance(r, bool):
                     raise RuntimeErrorLoom("and expects booleans")
@@ -47,43 +132,53 @@ class Evaluator:
                 l = self.eval(node.get("left"))
                 if not isinstance(l, bool):
                     raise RuntimeErrorLoom("or expects booleans")
-                if l: return True
+                if l:
+                    return True
                 r = self.eval(node.get("right"))
                 if not isinstance(r, bool):
-                    raise RuntimeErrorLoom("or expects booleans")
+                    raise RuntimeErrorLoom("and expects booleans")
                 return l or r
 
-            l = self.eval(node.get("left")); r = self.eval(node.get("right"))
-            if op == "+": return l + r
-            if op == "-": return l - r
-            if op == "*": return l * r
-            if op == "/": return l / r
-            if op == "==": return l == r
-            if op == "!=": return l != r
-            if op == "<": return l < r
-            if op == "<=": return l <= r
-            if op == ">": return l > r
-            if op == ">=": return l >= r
+            l = self.eval(node.get("left"))
+            r = self.eval(node.get("right"))
+            if op == "+":
+                return l + r
+            if op == "-":
+                return l - r
+            if op == "*":
+                return l * r
+            if op == "/":
+                return l / r
+            if op == "==":
+                return l == r
+            if op == "!=":
+                return l != r
+            if op == "<":
+                return l < r
+            if op == "<=":
+                return l <= r
+            if op == ">":
+                return l > r
+            if op == ">=":
+                return l >= r
             raise RuntimeErrorLoom(f"unknown binary op: {op}")
         if t == "Range":
             start = int(self.eval(node.get("start")))
             end = int(self.eval(node.get("end")))
             inclusive = bool(node.get("inclusive"))
-            if inclusive:
-                return list(range(start, end + 1))
-            return list(range(start, end))
+            return list(range(start, end + 1 if inclusive else end))
         if t == "Call":
-            # Expressions don't support function calls yet
             return f"[expr-call:{node}]"
-        # Fallback
         return str(node)
 
 # --------------------------- interpreter core ----------------------------
-
 class Interpreter:
-    def __init__(self, registry: Optional[Dict[str, Dict[str, Any]]] = None,
-                 capabilities: Optional[Dict[str, Any]] = None,
-                 enforce_capabilities: bool = False):
+    def __init__(
+        self,
+        registry: Optional[Dict[str, Dict[str, Any]]] = None,
+        capabilities: Optional[Dict[str, Any]] = None,
+        enforce_capabilities: bool = False,
+    ):
         self.env: Dict[str, Any] = {}
         self.evaluator = Evaluator(self.env)
         self.registry = registry or {}
@@ -103,47 +198,61 @@ class Interpreter:
     def _get_expr(args: Dict[str, Any], *keys: str) -> Optional[Dict[str, Any]]:
         for k in keys:
             v = args.get(k)
-            if v is not None: return v
+            if v is not None:
+                return v
         return None
 
     def _extract_flow(self, module: Dict[str, Any]) -> List[Dict[str, Any]]:
         return module.get("flow") or module.get("steps") or module.get("block", {}).get("steps") or []
 
     def exec_step(self, step: Dict[str, Any], step_index: int = 0) -> Tuple[Any, bool]:
-        verb = step.get("verb")
-        args = step.get("args", {}) or {}
+        canon_verb, args, raw_verb = normalize_verb_and_args(step)
 
-        if verb == "Show":
+        # ---- Make (assignment) ----
+        if canon_verb == "Make":
+            name = args.get("name")
+            if not isinstance(name, str) or not name:
+                raise RuntimeErrorLoom("Make: missing 'name'")
+            val_node = self._get_expr(args, "expr", "value")
+            value = self.evaluator.eval(val_node) if isinstance(val_node, dict) else val_node
+            self.env[name] = value
+            self.receipt["steps"].append({"event": "make", "name": name, "value": value, "verb": "Make", "rawVerb": raw_verb})
+            return None, False
+
+        # ---- Show (print/log) ----
+        if canon_verb == "Show":
             expr = self._get_expr(args, "expr", "text", "value")
             val = self.evaluator.eval(expr) if isinstance(expr, dict) else (expr if expr is not None else "")
             self.receipt["logs"].append(str(val))
+            self.receipt["steps"].append({"event": "show", "value": str(val), "verb": "Show", "rawVerb": raw_verb})
             print(val)
             return None, False
 
-        if verb == "Return":
+        # ---- Return ----
+        if canon_verb == "Return":
             expr = self._get_expr(args, "expr", "value")
             val = self.evaluator.eval(expr) if isinstance(expr, dict) else expr
+            self.receipt["steps"].append({"event": "return", "value": val, "verb": "Return", "rawVerb": raw_verb})
             return val, True
 
-        if verb == "Ask":
+        # ---- Ask ----
+        if canon_verb == "Ask":
             name = args.get("name")
             default_expr = args.get("default")
             if name not in self.env:
                 self.env[name] = self.evaluator.eval(default_expr) if default_expr is not None else None
             self.receipt["ask"].append({"verb": "Ask", "name": name, "default": default_expr})
+            self.receipt["steps"].append({"event": "ask", "name": name, "verb": "Ask", "rawVerb": raw_verb})
             return None, False
 
-        if verb == "Choose":
+        # ---- Choose (when/otherwise) ----
+        if canon_verb == "Choose":
             branches = args.get("branches") or []
             for idx, br in enumerate(branches):
                 pred = br.get("when")
                 if pred is not None:
                     val = bool(self.evaluator.eval(pred))
-                    self.receipt["steps"].append({
-                        "event": "choose",
-                        "predicateTrace": [{"expr": pred, "value": val}],
-                        "selected": {"branch": idx, "kind": "when"} if val else None,
-                    })
+                    self.receipt["steps"].append({"event": "choose", "predicateTrace": [{"expr": pred, "value": val}], "selected": {"branch": idx, "kind": "when"} if val else None, "verb": "Choose", "rawVerb": raw_verb})
                     if val:
                         body = br.get("steps") or br.get("block") or br.get("body") or []
                         if isinstance(body, dict):
@@ -160,21 +269,14 @@ class Interpreter:
                     for st in body:
                         res, returned = self.exec_step(st)
                         if returned:
-                            self.receipt["steps"].append({
-                                "event": "choose",
-                                "predicateTrace": [],
-                                "selected": {"branch": idx, "kind": "otherwise"},
-                            })
+                            self.receipt["steps"].append({"event": "choose", "predicateTrace": [], "selected": {"branch": idx, "kind": "otherwise"}, "verb": "Choose", "rawVerb": raw_verb})
                             return res, True
-                    self.receipt["steps"].append({
-                        "event": "choose",
-                        "predicateTrace": [],
-                        "selected": {"branch": idx, "kind": "otherwise"},
-                    })
+                    self.receipt["steps"].append({"event": "choose", "predicateTrace": [], "selected": {"branch": idx, "kind": "otherwise"}, "verb": "Choose", "rawVerb": raw_verb})
                     return None, False
             return None, False
 
-        if verb == "Repeat":
+        # ---- Repeat (for) ----
+        if canon_verb == "Repeat":
             iterator = args.get("iterator")
             it_name = None
             if isinstance(iterator, dict) and "name" in iterator:
@@ -212,9 +314,11 @@ class Interpreter:
                     res, returned = self.exec_step(st)
                     if returned:
                         return res, True
+            self.receipt["steps"].append({"event": "repeat", "iterator": it_name, "verb": "Repeat", "rawVerb": raw_verb})
             return None, False
 
-        if verb == "Call":
+        # ---- Call (cross-module) ----
+        if canon_verb == "Call":
             raw_mod_name = args.get("module")
             inputs_obj = args.get("inputs") or {}
             child_inputs: Dict[str, Any] = {}
@@ -226,7 +330,6 @@ class Interpreter:
             if raw_mod_name in self.registry:
                 callee = self.registry[raw_mod_name]
             else:
-                # Try normalized key
                 norm_key = normalize_module_slug(raw_mod_name or "")
                 if norm_key in self.registry:
                     callee = self.registry[norm_key]
@@ -239,10 +342,8 @@ class Interpreter:
 
             # Prepare child interpreter (share registry/policy)
             child = Interpreter(registry=self.registry, capabilities=self.capabilities, enforce_capabilities=self.enforce_capabilities)
-            # Carry env defaults (Ask fallbacks etc.)
-            child.env.update(dict(self.env))
-            # Bind explicit inputs
-            child.env.update(child_inputs)
+            child.env.update(dict(self.env))      # inherit env
+            child.env.update(child_inputs)        # bind explicit inputs
 
             # Execute child
             self._call_stack.append(callee.get("name") or raw_mod_name or "<anonymous>")
@@ -275,9 +376,11 @@ class Interpreter:
                 "inputs": dict(child_inputs),
                 "inputsResolved": inputsResolved,
                 "capabilityCheck": cap_record,
+                "verb": "Call",
+                "rawVerb": raw_verb,
             })
 
-            # Record callGraph (keep raw for parity; add normalized alongside)
+            # Record callGraph
             self.receipt["callGraph"].append({
                 "from": caller_raw,
                 "to": raw_mod_name,
@@ -286,17 +389,16 @@ class Interpreter:
                 "atStep": step_index
             })
 
-            # Enforce if configured
             if violation and self.enforce_capabilities:
                 raise RuntimeErrorLoom(f"Capability denied: Call from '{caller_raw}' to '{raw_mod_name}'")
 
             save_as = args.get("result") or args.get("saveAs") or args.get("save") or args.get("as")
             if save_as:
                 self.env[save_as] = child_result
-
             return None, False
 
-        raise RuntimeErrorLoom(f"Unknown verb: {verb}")
+        # ---- Fallback ----
+        raise RuntimeErrorLoom(f"Unknown verb: {canon_verb}")
 
     def exec_block(self, block: Dict[str, Any]) -> Any:
         result = None
@@ -320,6 +422,7 @@ class Interpreter:
             self._call_stack.pop()
             self.receipt["env"] = dict(self.env)
 
+# Convenience (used elsewhere)
 def _load_or_build_module(path: str) -> Dict[str, Any]:
     p = Path(path)
     text = p.read_text(encoding="utf-8")
