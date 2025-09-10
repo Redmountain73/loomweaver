@@ -1,4 +1,4 @@
-# scripts/validate_program.py
+# scripts/validate_program.py 
 # Validate Program + Modules (+ optional Capabilities) using LOCAL, REF-FREE schemas.
 # - Normalizes outline shorthands.
 # - Embeds module schema into program schema (no network).
@@ -12,9 +12,11 @@ import argparse, json, re, sys
 from pathlib import Path
 from typing import Any, Dict, List
 
-# Add src to path for normalize_module_slug
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
-from names import normalize_module_slug  # noqa: E402
+# Make repo root importable; import from src as a package
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+
+from src.names import normalize_module_slug  # noqa: E402
 
 try:
     import jsonschema
@@ -23,8 +25,8 @@ except Exception:
     jsonschema = None
     Draft202012Validator = None
 
-ROOT = Path(__file__).resolve().parents[1]
 SCHEMAS = ROOT / "Schemas"
+
 
 SUCCESS_CRITERIA_PROP = {"type": "array", "items": {"type": "string"}, "default": []}
 EXAMPLES_PROP = {
