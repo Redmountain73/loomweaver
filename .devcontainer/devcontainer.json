@@ -1,0 +1,15 @@
+﻿{
+  "name": "loomweaver",
+  "image": "mcr.microsoft.com/devcontainers/python:3.13",
+  "postCreateCommand": "python -m pip install --upgrade pip && pip install jsonschema",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "EditorConfig.EditorConfig"
+      ]
+    }
+  },
+  "remoteEnv": { "PYTHONDONTWRITEBYTECODE": "1" }
+}
