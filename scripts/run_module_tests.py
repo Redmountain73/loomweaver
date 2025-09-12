@@ -5,7 +5,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 # Make the repo root importable; import from src as a package
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,15 +24,56 @@ def dump_json(obj: Any) -> str:
     return json.dumps(obj, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n"
 
 
-def find_module_ast(mods_doc: dict, name_raw: str) -> Dict[str, Any] | None:
-    mods = mods_doc.get("modules") or []
-    norm = normalize_module_slug(name_raw or "")
+def canonical_modules_doc(doc: dict) -> dict:
+    """
+    Normalize various bundle shapes so we always return a dict with a 'modules' list.
+    Accepted shapes:
+      - {"modules":[...]}
+      - {"program":{"modules":[...]}}
+      - {"bundle":{"modules":[...]}} or {"document":{"modules":[...]}}
+      - single-module dict with name or module.name → wrap into a list
+    """
+    if isinstance(doc.get("modules"), list):
+        return {"modules": doc["modules"]}
+
+    for key in ("program", "bundle", "document", "root"):
+        sub = doc.get(key)
+        if isinstance(sub, dict) and isinstance(sub.get("modules"), list):
+            return {"modules": sub["modules"]}
+
+    # Single-module form: wrap
+    if doc.get("name") or (isinstance(doc.get("module"), dict) and doc["module"].get("name")):
+        return {"modules": [doc]}
+
+    # Fallback: empty
+    return {"modules": []}
+
+
+def extract_name(m: dict) -> Optional[str]:
+    """Get a human/raw module name from a module record."""
+    if isinstance(m.get("name"), str):
+        return m["name"]
+    mod = m.get("module")
+    if isinstance(mod, dict) and isinstance(mod.get("name"), str):
+        return mod["name"]
+    return None
+
+
+def find_module_ast(mods_doc: dict, name_raw: str) -> Optional[Dict[str, Any]]:
+    mods = canonical_modules_doc(mods_doc)["modules"]
+    target_norm = normalize_module_slug(name_raw or "")
+
+    # Prefer exact raw-name match
     for m in mods:
-        if m.get("name") == name_raw:
+        if extract_name(m) == name_raw:
             return m
+
+    # Fallback to normalized-name match
     for m in mods:
-        if normalize_module_slug(m.get("name") or "") == norm:
+        raw = extract_name(m) or ""
+        if normalize_module_slug(raw) == target_norm:
             return m
+
     return None
 
 
