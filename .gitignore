@@ -13,3 +13,8 @@ tmp/
 .cache/
 dist/
 build/
+
+# loom temp + backups
+*.bak
+agents/loomweaver/*.ast.build.json
+loomweaver_handoff_*.zip
