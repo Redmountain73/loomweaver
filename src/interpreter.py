@@ -1,14 +1,18 @@
-"""Loom Interpreter aligned with SPEC-001 and current goldens.
+"""Loom Interpreter aligned with SPEC-001, extended for SPEC-002 fetch.
 
 - Verb synonyms supported (Make, Show, Return, Ask, Choose, Repeat, Call).
-- Accepts Make LHS: name/target/var/id/key/binding/lhs; RHS: expr/value/to/rhs/with/is/equals.
+- Make accepts LHS: name/target/var/id/key/binding/lhs; RHS: expr/value/to/rhs/with/is/equals.
 - Choose supports branches with {"when": <expr>} and {"otherwise": true}.
-- Evaluator supports node types: Identifier, String, Number, Bool, Binary (op).
-- Receipt shape matches goldens: keys = ask, callGraph, engine, env, logs, steps.
+- Evaluator supports: Identifier, String, Number, Bool, Binary/BinaryExpr.
+- Receipt shape (unchanged for SPEC-001 goldens): ask, callGraph, engine, env, logs, steps.
+- SPEC-002: Call can fetch a URL when args has {"url": "..."} with limits and optional sinks:
+    into, intoBytes, intoStatus, intoType. Network calls are blocked when enforcement is enabled.
 """
 
 from typing import Any, Dict, List, Optional, Tuple
 from .names import normalize_module_slug
+from .http_client import DEFAULT_TIMEOUT, DEFAULT_MAX_BYTES
+from .fetchers import real_fetcher
 
 class RuntimeErrorLoom(Exception):
     pass
@@ -21,6 +25,8 @@ VERB_ALIASES = {
     "choose": "Choose", "if": "Choose",
     "repeat": "Repeat", "for": "Repeat", "foreach": "Repeat", "loop": "Repeat",
     "call": "Call", "invoke": "Call", "run": "Call", "use": "Call",
+    # SPEC-002 aliases:
+    "fetch": "Call", "query": "Call",
 }
 
 def normalize_verb_and_args(step: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[str]]:
@@ -63,6 +69,7 @@ def normalize_verb_and_args(step: Dict[str, Any]) -> Tuple[str, Dict[str, Any], 
             args["block"] = {"steps": args.pop("steps")}
 
     elif canon == "Call":
+        # Accept {"module":"..."}, {"target":"..."} or a direct URL via {"url":"..."} / {"http":"..."}
         if "module" not in args and "target" in args:
             args["module"] = args.pop("target")
 
@@ -93,14 +100,13 @@ class Evaluator:
             if op in (">","gt"): return L > R
             if op in (">=","gte"): return L >= R
             raise RuntimeErrorLoom(f"Unsupported binary op: {op}")
-        # pass-through for unknown objects
         return node
 
 class Interpreter:
-    def __init__(self, *, enforce_capabilities: bool = False):
+    def __init__(self, *, enforce_capabilities: bool = False, fetcher=None):
         self._enforce_default = bool(enforce_capabilities)
+        self._fetcher = fetcher or real_fetcher
         self.env: Dict[str, Any] = {}
-        # Receipt aligned with goldens
         self.receipt: Dict[str, Any] = {
             "ask": [],
             "callGraph": [],
@@ -225,9 +231,45 @@ class Interpreter:
             return None, False
 
         if canon_verb == "Call":
-            target_raw = args.get("module")
-            target_norm = normalize_module_slug(target_raw or "")
-            self.receipt["callGraph"].append({"from": None, "to": target_raw})
+            # Path A: module-to-module (existing behavior, record only)
+            if "module" in args and "url" not in args and "http" not in args:
+                target_raw = args.get("module")
+                target_norm = normalize_module_slug(target_raw or "")
+                self.receipt["callGraph"].append({"from": None, "to": target_raw})
+                return None, False
+
+            # Path B: SPEC-002 URL fetch
+            url = args.get("url") or args.get("http")
+            if url:
+                if self._enforce_default:
+                    # Capabilities enforced: block network usage
+                    self.receipt["logs"].append({"level": "error", "event": "capability", "cap": "network:fetch", "action": "blocked"})
+                    raise RuntimeErrorLoom("network fetch disallowed under capability enforcement")
+                timeout = float(args.get("timeout") or DEFAULT_TIMEOUT)
+                max_bytes = int(args.get("maxBytes") or DEFAULT_MAX_BYTES)
+                result = self._fetcher(url, timeout=timeout, max_bytes=max_bytes)
+                # optional sinks
+                if isinstance(args.get("into"), str):
+                    text = result["body"].decode("utf-8", errors="replace")
+                    self.env[args["into"]] = text
+                if isinstance(args.get("intoBytes"), str):
+                    self.env[args["intoBytes"]] = int(len(result["body"]))
+                if isinstance(args.get("intoStatus"), str):
+                    self.env[args["intoStatus"]] = int(result.get("status", 0))
+                if isinstance(args.get("intoType"), str):
+                    self.env[args["intoType"]] = result.get("content_type", "")
+                # record minimal step
+                self._append_step({
+                    "event": "fetch",
+                    "url": result.get("url"),
+                    "status": int(result.get("status", 0)),
+                    "bytes": int(len(result.get("body") or b"")),
+                    "truncated": bool(result.get("truncated")),
+                    "verb": "Call",
+                })
+                return None, False
+
+            # Unknown Call shape
             return None, False
 
         raise RuntimeErrorLoom(f"Unsupported verb: {canon_verb}")
@@ -247,6 +289,9 @@ class Interpreter:
         enforce_capabilities: Optional[bool] = None,
     ) -> Any:
         m = self._unwrap_module(module)
+        enforced = self._enforce_default if enforce_capabilities is None else bool(enforce_capabilities)
+        self._enforce_default = enforced  # update
+
         self.env = dict(inputs or {})
         self.evaluator = Evaluator(self.env)
         self.receipt.update({
