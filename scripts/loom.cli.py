@@ -1,79 +1,88 @@
-# scripts/loom.cli.py
-import argparse, sys, subprocess
+#!/usr/bin/env python3
+"""
+Loom CLI (friendly wrapper)
+
+Subcommands:
+  validate  -> scripts/validate_program.py (canonical AST + program)
+  test      -> scripts/run_module_tests.py (strict by default)
+  run       -> scripts/run_ast_module.py (one module, pass inputs)
+"""
+import argparse
+import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-AGENTS = ROOT / "agents" / "loomweaver"
 
-def run_py(args_list):
-    # Run in repo root so relative paths match CI
-    return subprocess.run([sys.executable] + args_list, cwd=ROOT).returncode
+DEFAULT_PROGRAM    = ROOT / "agents" / "loomweaver" / "loomweaver.program.json"
+DEFAULT_MODULES    = ROOT / "agents" / "loomweaver" / "loomweaver.modules.ast.json"
+DEFAULT_CAPS       = ROOT / "agents" / "loomweaver" / "loomweaver.capabilities.json"  # <— renamed
+DEFAULT_TESTS      = ROOT / "agents" / "loomweaver" / "loomweaver.tests.json"
+DEFAULT_GOLDENS    = ROOT / "agents" / "loomweaver" / "goldens"
 
-def main():
-    ap = argparse.ArgumentParser(prog="loom")
+def run(cmd: list[str]) -> int:
+    print("+", " ".join(str(c) for c in cmd))
+    return subprocess.call(cmd)
+
+def cmd_validate(args: argparse.Namespace) -> int:
+    validate_py = ROOT / "scripts" / "validate_program.py"
+    cmd = [
+        sys.executable, str(validate_py),
+        "--program", str(DEFAULT_PROGRAM),
+        "--modules", str(DEFAULT_MODULES),
+        "--capabilities", str(DEFAULT_CAPS),
+    ]
+    if args.strict:
+        cmd.append("--strict")
+    return run(cmd)
+
+def cmd_test(args: argparse.Namespace) -> int:
+    tests_py = ROOT / "scripts" / "run_module_tests.py"
+    cmd = [
+        sys.executable, str(tests_py),
+        "--modules", str(DEFAULT_MODULES),
+        "--tests",   str(DEFAULT_TESTS),
+        "--golden-dir", str(DEFAULT_GOLDENS),
+    ]
+    if args.strict:
+        cmd.append("--strict")
+    if args.snapshot:
+        cmd.append("--snapshot")
+    return run(cmd)
+
+def cmd_run(args: argparse.Namespace) -> int:
+    run_py = ROOT / "scripts" / "run_ast_module.py"
+    cmd = [
+        sys.executable, str(run_py),
+        "--modules", str(DEFAULT_MODULES),
+        "--module", args.module,
+    ]
+    if args.enforce_capabilities:
+        cmd.append("--enforce-capabilities")
+    cmd.extend(args.kv or [])
+    return run(cmd)
+
+def main() -> int:
+    ap = argparse.ArgumentParser(prog="loom", description="Loom CLI")
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    # validate
-    p_validate = sub.add_parser("validate", help="validate program+modules+caps JSON")
-    p_validate.add_argument("--strict", action="store_true", help="nonzero exit on schema/logic errors")
-    p_validate.add_argument("--warnings-as-errors", action="store_true", help="escalate warnings to nonzero exit")
-    p_validate.set_defaults(cmd="validate")
+    ap_val = sub.add_parser("validate", help="validate canonical AST + program + caps")
+    ap_val.add_argument("--strict", action="store_true")
+    ap_val.set_defaults(func=cmd_validate)
 
-    # test
-    p_test = sub.add_parser("test", help="run loomweaver tests via VM")
-    p_test.add_argument("--strict", action="store_true", help="nonzero exit on failures")
-    p_test.add_argument("--snapshot", action="store_true", help="write/update receipt goldens")
-    p_test.add_argument("--golden-dir", default=str(AGENTS / "goldens"), help="golden receipt directory")
-    p_test.set_defaults(cmd="test")
+    ap_test = sub.add_parser("test", help="run loomweaver module tests")
+    ap_test.add_argument("--strict", action="store_true", help="fail on any mismatch")
+    ap_test.add_argument("--snapshot", action="store_true", help="(re)write golden receipts")
+    ap_test.set_defaults(func=cmd_test)
 
-    # run
-    p_run = sub.add_parser("run", help="run a module via VM")
-    p_run.add_argument("module")
-    p_run.add_argument("--enforce-capabilities", action="store_true")
-    p_run.add_argument("kv", nargs="*")
-    p_run.set_defaults(cmd="run")
-
-    # compile
-    p_compile = sub.add_parser("compile", help="compile loomweaver outline -> modules AST")
-    p_compile.set_defaults(cmd="compile")
+    ap_run = sub.add_parser("run", help="run a single module with inputs")
+    ap_run.add_argument("--module", required=True, help="module name (raw)")
+    ap_run.add_argument("--enforce-capabilities", action="store_true")
+    ap_run.add_argument("kv", nargs="*", help="inputs as name=value")
+    ap_run.set_defaults(func=cmd_run)
 
     args = ap.parse_args()
-
-    if args.cmd == "validate":
-        return run_py([
-            str(ROOT / "scripts" / "validate_program.py"),
-            "--program", str(AGENTS / "loomweaver.program.json"),
-            "--modules", str(AGENTS / "loomweaver.modules.ast.json"),
-            "--capabilities", str(AGENTS / "loomweaver.capabilities.json"),
-            *(["--strict"] if args.strict else []),
-            *(["--warnings-as-errors"] if getattr(args, "warnings_as_errors", False) else []),
-        ])
-
-    if args.cmd == "test":
-        return run_py([
-            str(ROOT / "scripts" / "run_module_tests.py"),
-            "--modules", str(AGENTS / "loomweaver.modules.ast.json"),
-            "--tests",   str(AGENTS / "loomweaver.tests.json"),
-            *(["--strict"] if args.strict else []),
-            *(["--snapshot"] if args.snapshot else []),
-            "--golden-dir", args.golden_dir,
-        ])
-
-    if args.cmd == "run":
-        return run_py([
-            str(ROOT / "scripts" / "run_ast_module.py"),
-            str(AGENTS / "loomweaver.modules.ast.json"),
-            args.module, *args.kv,
-            *(["--enforce-capabilities"] if args.enforce_capabilities else []),
-        ])
-
-    if args.cmd == "compile":
-        # IMPORTANT: run as a module so relative imports (from .tokenizer …) work
-        return run_py([
-            "-m", "src.compiler",
-            str(AGENTS / "loomweaver.outline.md"),
-            str(AGENTS / "loomweaver.modules.ast.json"),
-        ])
+    return args.func(args)
 
 if __name__ == "__main__":
     raise SystemExit(main())

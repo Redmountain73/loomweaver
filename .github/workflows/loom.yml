@@ -2,16 +2,21 @@ name: Loom CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ "main", "master" ]
+  workflow_dispatch: {}
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  test:
-    name: Tests (py${{ matrix.python-version }})
+  ci:
+    name: Validate • Test • Smoke (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -22,13 +27,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
           check-latest: true
 
-      - name: Install deps
+      - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install jsonschema
@@ -36,67 +41,32 @@ jobs:
       - name: Sanity tree
         run: |
           pwd
-          printf "\n--- root ---\n"; ls -la || true
-          for d in agents agents/loomweaver scripts src .github/workflows; do
-            printf "\n--- %s ---\n" "$d"
-            if [ -d "$d" ]; then ls -la "$d"; else echo "missing"; fi
-          done
+          echo "--- root ---"; ls -la || true
+          echo "--- agents/loomweaver ---"; ls -la agents/loomweaver || true
+          echo "--- scripts ---"; ls -la scripts || true
+          echo "--- src ---"; ls -la src || true
 
-      # Build to a temp bundle (for smoke only). Do NOT overwrite canonical AST.
+      - name: Python version
+        run: python -V
+
+      # Optional smoke build from outline (does not touch canonical AST)
       - name: Compile (temp bundle)
         run: |
           python -m src.compiler \
-            agents/loomweaver/loomweaver.outline.md \
-            agents/loomweaver/loomweaver.modules.ast.build.json
-          ls -la agents/loomweaver/*.json || true
+            "agents/loomweaver/loomweaver.outline.md" \
+            "agents/loomweaver/loomweaver.modules.ast.build.json"
 
-      # ✅ Validate the committed canonical AST (avoids '<anonymous>' placeholders)
-      - name: Validate (canonical AST)
+      # Validate the committed, canonical AST + program + caps
+      - name: Validate (strict)
         run: |
-          python scripts/validate_program.py \
-            --modules agents/loomweaver/loomweaver.modules.ast.json \
-            --strict
+          python "scripts/loom.cli.py" validate --strict
 
-      # ✅ Tests use canonical AST + compare receipts to goldens
-      - name: Tests (strict; value + receipts)
+      # Run loomweaver module tests with strict exit policy
+      - name: Tests (strict)
         run: |
-          python scripts/run_module_tests.py \
-            --modules agents/loomweaver/loomweaver.modules.ast.json \
-            --tests   agents/loomweaver/loomweaver.tests.json \
-            --strict
+          python "scripts/loom.cli.py" test --strict
 
-  enforce_capabilities:
-    name: Capability Enforcement Smoke (py3.13)
-    runs-on: ubuntu-latest
-    needs: [ test ]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-          check-latest: true
-
-      - name: Install deps
-        run: |
-          python -m pip install --upgrade pip
-          pip install jsonschema
-
-      - name: Compile (temp bundle)
-        run: |
-          python -m src.compiler \
-            agents/loomweaver/loomweaver.outline.md \
-            agents/loomweaver/loomweaver.modules.ast.build.json
-
-      - name: Validate (canonical AST)
-        run: |
-          python scripts/validate_program.py \
-            --modules agents/loomweaver/loomweaver.modules.ast.json \
-            --strict
-
+      # Capability-enforced smoke run of a simple module
       - name: Enforced VM smoke
         run: |
-          python scripts/loom.cli.py run "Greeting Module" name=Alice --enforce-capabilities
+          python "scripts/loom.cli.py" run --module "Greeting Module" name=Alice --enforce-capabilities
