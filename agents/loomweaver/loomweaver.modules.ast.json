@@ -1,184 +1,207 @@
 {
   "modules": [
     {
-      "type": "Module",
-      "name": "Greeting Module",
-      "purpose": "Generate a friendly greeting. Maintain warmth and clarity.",
-      "inputs": [
-        "name (Text)"
-      ],
-      "outputs": [
-        "message (Text)"
+      "astVersion": "2.1.0",
+      "examples": [
+        "Example dialogue: User: \"hi\" → Output: \"Hello, hi!\""
       ],
       "flow": [
         {
-          "verb": "Make",
           "args": {
-            "var": "message",
             "expr": {
-              "type": "Identifier",
-              "name": "name"
-            }
-          }
+              "name": "name",
+              "type": "Identifier"
+            },
+            "var": "message"
+          },
+          "verb": "Make"
         },
         {
-          "verb": "Choose",
           "args": {
             "branches": [
               {
-                "when": {
-                  "type": "Binary",
-                  "op": "==",
-                  "left": {
-                    "type": "Identifier",
-                    "name": "name"
-                  },
-                  "right": {
-                    "type": "String",
-                    "value": ""
-                  }
-                },
                 "steps": [
                   {
-                    "verb": "Return",
                     "args": {
                       "expr": {
                         "type": "String",
                         "value": "anonymous user"
                       }
-                    }
+                    },
+                    "verb": "Return"
                   }
-                ]
+                ],
+                "when": {
+                  "left": {
+                    "name": "name",
+                    "type": "Identifier"
+                  },
+                  "op": "==",
+                  "right": {
+                    "type": "String",
+                    "value": ""
+                  },
+                  "type": "Binary"
+                }
               },
               {
                 "otherwise": true,
                 "steps": [
                   {
-                    "verb": "Return",
                     "args": {
                       "expr": {
-                        "type": "Identifier",
-                        "name": "message"
+                        "name": "message",
+                        "type": "Identifier"
                       }
-                    }
+                    },
+                    "verb": "Return"
                   }
                 ]
               }
             ]
-          }
+          },
+          "verb": "Choose"
         }
       ],
+      "inputs": [
+        "name (Text)"
+      ],
+      "name": "Greeting Module",
+      "outputs": [
+        "message (Text)"
+      ],
+      "purpose": "Generate a friendly greeting. Maintain warmth and clarity.",
       "successCriteria": [
         "Always return a greeting string.",
         "Never fail silently."
       ],
-      "version": "1.0",
-      "astVersion": "2.1.0",
-      "examples": [
-        "Example dialogue: User: \"hi\" → Output: \"Hello, hi!\""
-      ]
+      "type": "Module",
+      "version": "1.0"
     },
     {
-      "type": "Module",
-      "name": "Score Gate Module",
-      "purpose": "Evaluate a numeric score. Produce a simple pass/fail verdict.",
-      "inputs": [
-        "score (Number)"
-      ],
-      "outputs": [
-        "verdict (Text)"
-      ],
+      "astVersion": "2.1.0",
+      "examples": [],
       "flow": [
         {
-          "verb": "Choose",
           "args": {
             "branches": [
               {
-                "when": {
-                  "type": "Binary",
-                  "op": ">=",
-                  "left": {
-                    "type": "Identifier",
-                    "name": "score"
-                  },
-                  "right": {
-                    "type": "Number",
-                    "value": 90
-                  }
-                },
                 "steps": [
                   {
-                    "verb": "Return",
                     "args": {
                       "expr": {
                         "type": "String",
                         "value": "pass"
                       }
-                    }
+                    },
+                    "verb": "Return"
                   }
-                ]
+                ],
+                "when": {
+                  "left": {
+                    "name": "score",
+                    "type": "Identifier"
+                  },
+                  "op": ">=",
+                  "right": {
+                    "type": "Number",
+                    "value": 90
+                  },
+                  "type": "Binary"
+                }
               },
               {
                 "otherwise": true,
                 "steps": [
                   {
-                    "verb": "Return",
                     "args": {
                       "expr": {
                         "type": "String",
                         "value": "fail"
                       }
-                    }
+                    },
+                    "verb": "Return"
                   }
                 ]
               }
             ]
-          }
+          },
+          "verb": "Choose"
         }
       ],
+      "inputs": [
+        "score (Number)"
+      ],
+      "name": "Score Gate Module",
+      "outputs": [
+        "verdict (Text)"
+      ],
+      "purpose": "Evaluate a numeric score. Produce a simple pass/fail verdict.",
       "successCriteria": [
         "Numeric comparison uses thresholds as written.",
         "Output is always one of: \"pass\", \"fail\"."
       ],
-      "version": "1.0",
-      "astVersion": "2.1.0",
-      "examples": []
+      "type": "Module",
+      "version": "1.0"
     },
     {
-      "type": "Module",
-      "name": "Echo Module",
-      "purpose": "Echo back a provided name. Stay minimal and deterministic.",
+      "astVersion": "2.1.0",
+      "examples": [],
+      "flow": [
+        {
+          "args": {
+            "expr": {
+              "name": "name",
+              "type": "Identifier"
+            },
+            "var": "echo"
+          },
+          "verb": "Make"
+        },
+        {
+          "args": {
+            "expr": {
+              "name": "echo",
+              "type": "Identifier"
+            }
+          },
+          "verb": "Return"
+        }
+      ],
       "inputs": [
         "name (Text)"
       ],
+      "name": "Echo Module",
       "outputs": [
         "echo (Text)"
       ],
+      "purpose": "Echo back a provided name. Stay minimal and deterministic.",
+      "successCriteria": [],
+      "type": "Module",
+      "version": "1.0"
+    },
+    {
       "flow": [
         {
-          "verb": "Make",
           "args": {
-            "var": "echo",
-            "expr": {
-              "type": "Identifier",
-              "name": "name"
-            }
-          }
+            "into": "xml",
+            "intoBytes": "bytes",
+            "intoStatus": "status",
+            "url": "https://export.arxiv.org/api/query?search_query={query}&max_results=1"
+          },
+          "verb": "Fetch"
         },
         {
-          "verb": "Return",
           "args": {
             "expr": {
-              "type": "Identifier",
-              "name": "echo"
+              "name": "xml",
+              "type": "Identifier"
             }
-          }
+          },
+          "verb": "Return"
         }
       ],
-      "successCriteria": [],
-      "version": "1.0",
-      "astVersion": "2.1.0",
-      "examples": []
+      "name": "Arxiv Search"
     }
   ]
 }

@@ -95,3 +95,64 @@ D. Flow
 E. Tests
 
 1. Input: Bob → Output: "Bob"
+
+## Agent (top-level)
+Agent Name
+ArxivAgent
+
+A. Purpose and Identity
+   1. A demo agent that queries arXiv for papers and returns a formatted summary.
+
+B. Inputs
+   1. query
+
+B. Outputs
+   1. report
+
+C. Flow
+   1. Call "Arxiv Search" with query=query, then get xml
+   2. Call "Summarize Title" with xml=xml, then get title
+   3. Make report = "Found paper: " + title
+   4. Show report
+   5. Return report
+
+D. Tests
+   1. query="all:graph" then result contains "Found paper:"
+
+E. Success Criteria
+   1. Returns a readable one-line report.
+
+F. Examples
+   1. query: "all:graph neural networks"
+
+G. Version
+   0.2.0
+
+H. astVersion
+   0.1.0
+
+## Module (within agent)
+I. Module Name
+Arxiv Search
+A. Purpose and Identity
+   1. Fetch arXiv metadata
+B. Inputs
+   1. query
+C. Outputs
+   1. xml
+   2. status
+   3. bytes
+D. Flow
+   1. Fetch "https://export.arxiv.org/api/query?search_query={query}&max_results=1"
+      into=xml, intoStatus=status, intoBytes=bytes
+   2. Return xml
+E. Tests
+   1. input: query="all:graph" expect: contains "entry"
+F. Success Criteria
+   1. xml contains <entry>
+G. Examples
+   1. query: "all:graph"
+H. Version
+   0.2.0
+I. astVersion
+   0.1.0

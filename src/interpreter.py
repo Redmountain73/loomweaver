@@ -1,21 +1,26 @@
 """Loom Interpreter aligned with SPEC-001, extended for SPEC-002 fetch.
 
-- Verb synonyms supported (Make, Show, Return, Ask, Choose, Repeat, Call).
+- Verb synonyms (Make, Show, Return, Ask, Choose, Repeat, Call).
 - Make accepts LHS: name/target/var/id/key/binding/lhs; RHS: expr/value/to/rhs/with/is/equals.
 - Choose supports branches with {"when": <expr>} and {"otherwise": true}.
 - Evaluator supports: Identifier, String, Number, Bool, Binary/BinaryExpr.
-- Receipt shape (unchanged for SPEC-001 goldens): ask, callGraph, engine, env, logs, steps.
-- SPEC-002: Call can fetch a URL when args has {"url": "..."} with limits and optional sinks:
-    into, intoBytes, intoStatus, intoType. Network calls are blocked when enforcement is enabled.
+- Receipts: ask, callGraph, engine, env, logs, steps. Deterministic content.
+- SPEC-002: Call can fetch a URL when args has {"url" | "http"}.
+  NEW: args.url may be an expression (Identifier/Binary +) OR a string with
+       {name}-style placeholders. We evaluate/expand it safely.
 """
 
 from typing import Any, Dict, List, Optional, Tuple
+import re
+
 from .names import normalize_module_slug
 from .http_client import DEFAULT_TIMEOUT, DEFAULT_MAX_BYTES
 from .fetchers import real_fetcher
 
+
 class RuntimeErrorLoom(Exception):
     pass
+
 
 VERB_ALIASES = {
     "make": "Make", "set": "Make", "let": "Make", "assign": "Make", "define": "Make",
@@ -29,6 +34,7 @@ VERB_ALIASES = {
     "fetch": "Call", "query": "Call",
 }
 
+
 def normalize_verb_and_args(step: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[str]]:
     raw = (step.get("verb") or "").strip()
     canon = VERB_ALIASES.get(raw.lower(), raw)
@@ -38,16 +44,20 @@ def normalize_verb_and_args(step: Dict[str, Any]) -> Tuple[str, Dict[str, Any], 
         if "name" not in args:
             for k in ("target", "var", "id", "key", "binding", "lhs"):
                 if k in args:
-                    args["name"] = args.pop(k); break
+                    args["name"] = args.pop(k)
+                    break
         if "expr" not in args:
             for k in ("value", "to", "rhs", "with", "is", "equals"):
                 if k in args:
-                    args["expr"] = args.pop(k); break
+                    args["expr"] = args.pop(k)
+                    break
 
     elif canon == "Show":
         if "expr" not in args:
-            if "text" in args: args["expr"] = args.get("text")
-            elif "value" in args: args["expr"] = args.get("value")
+            if "text" in args:
+                args["expr"] = args.get("text")
+            elif "value" in args:
+                args["expr"] = args.get("value")
 
     elif canon == "Ask":
         if "text" not in args and "prompt" in args:
@@ -55,12 +65,15 @@ def normalize_verb_and_args(step: Dict[str, Any]) -> Tuple[str, Dict[str, Any], 
         if "store" not in args:
             for k in ("name", "var", "target", "lhs", "key"):
                 if k in args:
-                    args["store"] = args.pop(k); break
+                    args["store"] = args.pop(k)
+                    break
 
     elif canon == "Repeat":
         if "iterator" not in args:
-            if "var" in args: args["iterator"] = args.pop("var")
-            elif "it" in args: args["iterator"] = args.pop("it")
+            if "var" in args:
+                args["iterator"] = args.pop("var")
+            elif "it" in args:
+                args["iterator"] = args.pop("it")
         if "iterable" not in args and "in" in args:
             args["iterable"] = args.pop("in")
         if "block" not in args and "steps" not in args and "body" in args:
@@ -69,38 +82,48 @@ def normalize_verb_and_args(step: Dict[str, Any]) -> Tuple[str, Dict[str, Any], 
             args["block"] = {"steps": args.pop("steps")}
 
     elif canon == "Call":
-        # Accept {"module":"..."}, {"target":"..."} or a direct URL via {"url":"..."} / {"http":"..."}
         if "module" not in args and "target" in args:
             args["module"] = args.pop("target")
 
     return canon, args, raw or None
 
+
 class Evaluator:
     """Tiny expression evaluator for Loom-ish AST nodes."""
-    def __init__(self, env: Dict[str, Any]): self.env = env
+    def __init__(self, env: Dict[str, Any]):
+        self.env = env
+
     def eval(self, node: Any) -> Any:
-        if node is None: return None
-        if not isinstance(node, dict): return node
+        if node is None:
+            return None
+        if not isinstance(node, dict):
+            return node
         typ = node.get("type")
-        if typ == "Identifier": return self.env.get(node.get("name"))
-        if typ == "String":     return node.get("value", "")
-        if typ == "Number":     return node.get("value", 0)
-        if typ == "Bool":       return bool(node.get("value"))
+        if typ == "Identifier":
+            return self.env.get(node.get("name"))
+        if typ == "String":
+            return node.get("value", "")
+        if typ == "Number":
+            return node.get("value", 0)
+        if typ == "Bool":
+            return bool(node.get("value"))
         if typ in ("Binary", "BinaryExpr"):
             op = node.get("op")
-            L = self.eval(node.get("left")); R = self.eval(node.get("right"))
+            L = self.eval(node.get("left"))
+            R = self.eval(node.get("right"))
             if op == "+": return L + R
             if op == "-": return L - R
             if op == "*": return L * R
             if op == "/": return L / R
-            if op in ("==","equals"): return L == R
-            if op in ("!=","notEquals"): return L != R
-            if op in ("<","lt"): return L < R
-            if op in ("<=","lte"): return L <= R
-            if op in (">","gt"): return L > R
-            if op in (">=","gte"): return L >= R
+            if op in ("==", "equals"): return L == R
+            if op in ("!=", "notEquals"): return L != R
+            if op in ("<", "lt"): return L < R
+            if op in ("<=", "lte"): return L <= R
+            if op in (">", "gt"): return L > R
+            if op in (">=", "gte"): return L >= R
             raise RuntimeErrorLoom(f"Unsupported binary op: {op}")
         return node
+
 
 class Interpreter:
     def __init__(self, *, enforce_capabilities: bool = False, fetcher=None):
@@ -116,6 +139,7 @@ class Interpreter:
             "steps": [],
         }
 
+    # ---------- helpers
     def _unwrap_module(self, module_obj: Dict[str, Any]) -> Dict[str, Any]:
         return module_obj.get("module") if isinstance(module_obj.get("module"), dict) else module_obj
 
@@ -133,6 +157,26 @@ class Interpreter:
             entry["rawVerb"] = None
         self.receipt["steps"].append(entry)
 
+    _brace_rx = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
+
+    def _interpolate(self, s: str) -> str:
+        """Replace {name} with str(env.get(name,'')) safely."""
+        def repl(m):
+            name = m.group(1)
+            val = self.env.get(name)
+            return "" if val is None else str(val)
+        return self._brace_rx.sub(repl, s)
+
+    def _url_value(self, node_or_str: Any) -> str:
+        """Return final URL string from an AST node or a literal with {vars}."""
+        if isinstance(node_or_str, dict):
+            val = self.evaluator.eval(node_or_str)
+            return "" if val is None else str(val)
+        if isinstance(node_or_str, str):
+            return self._interpolate(node_or_str)
+        return ""
+
+    # ---------- execution
     def exec_step(self, step: Dict[str, Any]) -> Tuple[Any, bool]:
         canon_verb, args, raw_verb = normalize_verb_and_args(step)
 
@@ -161,7 +205,7 @@ class Interpreter:
 
         if canon_verb == "Ask":
             prompt = (args.get("text") or "")
-            store  = args.get("store")
+            store = args.get("store")
             default = args.get("default", "")
             answer = None
             if isinstance(store, str) and store:
@@ -216,7 +260,9 @@ class Interpreter:
             block = args.get("block") or {"steps": []}
 
             if isinstance(rng, dict) and rng.get("type") in ("Range",):
-                start = rng.get("start", 0); end = rng.get("end", 0); step_v = rng.get("step", 1)
+                start = rng.get("start", 0)
+                end = rng.get("end", 0)
+                step_v = rng.get("step", 1)
                 it = range(int(start), int(end), int(step_v))
             elif isinstance(iterable, list):
                 it = iterable
@@ -224,41 +270,48 @@ class Interpreter:
                 it = []
 
             for item in it:
-                if iterator: self.env[iterator] = item
+                if iterator:
+                    self.env[iterator] = item
                 res, did_return = self.exec_block(block)
                 if did_return:
                     return res, True
             return None, False
 
         if canon_verb == "Call":
-            # Path A: module-to-module (existing behavior, record only)
+            # Path A: module-to-module bookkeeping
             if "module" in args and "url" not in args and "http" not in args:
                 target_raw = args.get("module")
                 target_norm = normalize_module_slug(target_raw or "")
                 self.receipt["callGraph"].append({"from": None, "to": target_raw})
                 return None, False
 
-            # Path B: SPEC-002 URL fetch
-            url = args.get("url") or args.get("http")
-            if url:
+            # Path B: URL fetch (SPEC-002)
+            url_node = args.get("url") or args.get("http")
+            if url_node is not None:
                 if self._enforce_default:
-                    # Capabilities enforced: block network usage
-                    self.receipt["logs"].append({"level": "error", "event": "capability", "cap": "network:fetch", "action": "blocked"})
+                    self.receipt["logs"].append({
+                        "level": "error", "event": "capability",
+                        "cap": "network:fetch", "action": "blocked"
+                    })
                     raise RuntimeErrorLoom("network fetch disallowed under capability enforcement")
+
+                url = self._url_value(url_node)
                 timeout = float(args.get("timeout") or DEFAULT_TIMEOUT)
                 max_bytes = int(args.get("maxBytes") or DEFAULT_MAX_BYTES)
+
                 result = self._fetcher(url, timeout=timeout, max_bytes=max_bytes)
+
                 # optional sinks
                 if isinstance(args.get("into"), str):
-                    text = result["body"].decode("utf-8", errors="replace")
+                    text = (result.get("body") or b"").decode("utf-8", errors="replace")
                     self.env[args["into"]] = text
                 if isinstance(args.get("intoBytes"), str):
-                    self.env[args["intoBytes"]] = int(len(result["body"]))
+                    self.env[args["intoBytes"]] = int(len(result.get("body") or b""))
                 if isinstance(args.get("intoStatus"), str):
                     self.env[args["intoStatus"]] = int(result.get("status", 0))
                 if isinstance(args.get("intoType"), str):
                     self.env[args["intoType"]] = result.get("content_type", "")
-                # record minimal step
+
                 self._append_step({
                     "event": "fetch",
                     "url": result.get("url"),
