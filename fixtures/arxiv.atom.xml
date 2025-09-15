@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>arXiv Recent</title>
+  <entry>
+    <title>Quantum Kittens and the Lattice of Meows</title>
+    <id>http://arxiv.org/abs/0000.00001</id>
+  </entry>
+  <entry>
+    <title>Graph Transformers for Small, Cute Data</title>
+    <id>http://arxiv.org/abs/0000.00002</id>
+  </entry>
+</feed>
