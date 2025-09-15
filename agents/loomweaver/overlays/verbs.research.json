@@ -1,0 +1,47 @@
+{
+  "overlay": "research",
+  "version": "0.1.0",
+  "verbs": {
+    "Research": {
+      "mappedVerb": "Call",
+      "capabilities": ["network:fetch"],
+      "notes": "Perform a research fetch (fixture-backed in tests)."
+    },
+    "Review": {
+      "mappedVerb": "Show",
+      "sink": "stdout",
+      "notes": "Display retrieved material."
+    },
+    "Compare": {
+      "mappedVerb": "Choose",
+      "notes": "Compare → branch logic."
+    },
+    "Cite": {
+      "mappedVerb": "Make",
+      "op": "format.citation",
+      "notes": "Format citation text."
+    },
+    "Draft": {
+      "mappedVerb": "Make",
+      "op": "text.compose",
+      "notes": "Create a draft text."
+    },
+    "Revise": {
+      "mappedVerb": "Make",
+      "op": "text.rewrite",
+      "notes": "Revise a draft text."
+    },
+    "Narrate": {
+      "mappedVerb": "Call",
+      "op": "audio.tts",
+      "capabilities": ["audio:tts"],
+      "notes": "Convert text to speech (requires capability)."
+    },
+    "Illustrate": {
+      "mappedVerb": "Call",
+      "op": "image.gen",
+      "capabilities": ["image:gen"],
+      "notes": "Generate an illustration (requires capability)."
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "overlay": "core",
+  "version": "0.1.0",
+  "verbs": {
+    "Query": {
+      "mappedVerb": "Call",
+      "notes": "Used to fetch from a module or resource."
+    },
+    "Summarize": {
+      "mappedVerb": "Call",
+      "op": "xml.firstTitle",
+      "defaultInto": "summary",
+      "notes": "Summarize by extracting first <title> from XML (fixture-backed)."
+    },
+    "Report": {
+      "mappedVerb": ["Make", "Show"],
+      "pipeline": [
+        { "Make": { "op": "format.compose" } },
+        { "Show": { "sink": "stdout" } }
+      ],
+      "notes": "Report = format then show on stdout."
+    },
+    "Explain": {
+      "mappedVerb": "Show",
+      "sink": "stdout",
+      "notes": "Explain = show text to stdout."
+    },
+    "Check": {
+      "mappedVerb": "Choose",
+      "notes": "Check = branch/conditional."
+    }
+  }
+}
