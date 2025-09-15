@@ -113,6 +113,72 @@
         "name": "Report Result"
       },
       "name": "report-result-formats"
+    },
+    {
+      "expectContains": "Found paper:",
+      "inputs": {
+        "query": "all:graph"
+      },
+      "module": "ArxivAgent E2E",
+      "moduleAst": {
+        "flow": [
+          {
+            "args": {
+              "into": "xml",
+              "intoBytes": "bytes",
+              "intoStatus": "status",
+              "url": "fixture://agents/loomweaver/fixtures/arxiv_minimal.atom.xml"
+            },
+            "verb": "Fetch"
+          },
+          {
+            "args": {
+              "from": "xml",
+              "into": "title",
+              "op": "xml.firstTitle"
+            },
+            "verb": "Call"
+          },
+          {
+            "args": {
+              "expr": {
+                "left": {
+                  "type": "String",
+                  "value": "Found paper: "
+                },
+                "op": "+",
+                "right": {
+                  "name": "title",
+                  "type": "Identifier"
+                },
+                "type": "Binary"
+              },
+              "name": "report"
+            },
+            "verb": "Make"
+          },
+          {
+            "args": {
+              "expr": {
+                "name": "report",
+                "type": "Identifier"
+              }
+            },
+            "verb": "Show"
+          },
+          {
+            "args": {
+              "expr": {
+                "name": "report",
+                "type": "Identifier"
+              }
+            },
+            "verb": "Return"
+          }
+        ],
+        "name": "ArxivAgent E2E"
+      },
+      "name": "arxiv-e2e-chain"
     }
   ]
 }
