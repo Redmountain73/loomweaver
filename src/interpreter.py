@@ -18,12 +18,10 @@ import xml.etree.ElementTree as ET
 
 from .names import normalize_module_slug
 from .http_client import DEFAULT_TIMEOUT, DEFAULT_MAX_BYTES
-from .fetchers import real_fetcher
-
+from .fetchers import real_fetcher, fixture_fetcher  # <-- include fixture fetcher
 
 class RuntimeErrorLoom(Exception):
     pass
-
 
 VERB_ALIASES = {
     "make": "Make", "set": "Make", "let": "Make", "assign": "Make", "define": "Make",
@@ -36,7 +34,6 @@ VERB_ALIASES = {
     # SPEC-002 aliases:
     "fetch": "Call", "query": "Call",
 }
-
 
 def normalize_verb_and_args(step: Dict[str, Any]) -> Tuple[str, Dict[str, Any], Optional[str]]:
     raw = (step.get("verb") or "").strip()
@@ -90,7 +87,6 @@ def normalize_verb_and_args(step: Dict[str, Any]) -> Tuple[str, Dict[str, Any], 
 
     return canon, args, raw or None
 
-
 class Evaluator:
     """Tiny expression evaluator for Loom-ish AST nodes."""
     def __init__(self, env: Dict[str, Any]):
@@ -126,7 +122,6 @@ class Evaluator:
             if op in (">=", "gte"): return L >= R
             raise RuntimeErrorLoom(f"Unsupported binary op: {op}")
         return node
-
 
 class Interpreter:
     def __init__(self, *, enforce_capabilities: bool = False, fetcher=None, capabilities: Optional[Dict[str, Any]] = None):
@@ -164,7 +159,6 @@ class Interpreter:
     _brace_rx = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
 
     def _interpolate(self, s: str) -> str:
-        """Replace {name} with str(env.get(name,'')) safely."""
         def repl(m):
             name = m.group(1)
             val = self.env.get(name)
@@ -172,7 +166,6 @@ class Interpreter:
         return self._brace_rx.sub(repl, s)
 
     def _url_value(self, node_or_str: Any) -> str:
-        """Return final URL string from an AST node or a literal with {vars}."""
         if isinstance(node_or_str, dict):
             val = self.evaluator.eval(node_or_str)
             return "" if val is None else str(val)
@@ -182,7 +175,6 @@ class Interpreter:
 
     # ---- capability helpers
     def _caps_root(self) -> Dict[str, Any]:
-        # accept either {"capabilities": {...}} or direct mapping
         if "capabilities" in self._caps and isinstance(self._caps["capabilities"], dict):
             return self._caps["capabilities"]
         return self._caps if isinstance(self._caps, dict) else {}
@@ -202,7 +194,7 @@ class Interpreter:
 
     @staticmethod
     def _domain(url: str) -> str:
-        netloc = urlparse(url).netloc.split("@")[-1]  # strip userinfo
+        netloc = urlparse(url).netloc.split("@")[-1]
         return netloc.split(":")[0].lower()
 
     # ---------- execution
@@ -319,14 +311,11 @@ class Interpreter:
                 title = ""
                 try:
                     ns = {"atom": "http://www.w3.org/2005/Atom"}
-                    root = ET.fromstring(src_text)
-                    # Try Atom entry/title
+                    root = xml_safe_fromstring(src_text)
                     node = root.find(".//atom:entry/atom:title", ns)
                     if node is None:
-                        # Try Atom title anywhere
                         node = root.find(".//atom:title", ns)
                     if node is None:
-                        # No namespace: title anywhere (covers <entry><title>…</title></entry>)
                         node = root.find(".//title") or root.find("title")
                     if node is not None and node.text is not None:
                         title = node.text.strip()
@@ -341,7 +330,6 @@ class Interpreter:
             # Path A: module-to-module bookkeeping
             if "module" in args and "url" not in args and "http" not in args and "op" not in args:
                 target_raw = args.get("module")
-                target_norm = normalize_module_slug(target_raw or "")
                 self.receipt["callGraph"].append({"from": None, "to": target_raw})
                 return None, False
 
@@ -360,8 +348,7 @@ class Interpreter:
                         raise RuntimeErrorLoom("network fetch disallowed under capability enforcement")
                     if self._is_http(url):
                         domain = self._domain(url)
-                        allowed = domain in set(self._allowed_domains())
-                        if not allowed:
+                        if domain not in set(self._allowed_domains()):
                             self.receipt["logs"].append({
                                 "level": "error", "event": "capability",
                                 "cap": "network:fetch", "action": "blocked-domain",
@@ -375,9 +362,12 @@ class Interpreter:
                         })
                         raise RuntimeErrorLoom("network fetch disallowed under capability enforcement")
 
+                # Choose fetcher: route fixture:// to fixture_fetcher always
+                fetch_fn = fixture_fetcher if url.startswith("fixture://") else self._fetcher
+
                 timeout = float(args.get("timeout") or DEFAULT_TIMEOUT)
                 max_bytes = int(args.get("maxBytes") or DEFAULT_MAX_BYTES)
-                result = self._fetcher(url, timeout=timeout, max_bytes=max_bytes)
+                result = fetch_fn(url, timeout=timeout, max_bytes=max_bytes)
 
                 # optional sinks
                 if isinstance(args.get("into"), str):
@@ -400,7 +390,6 @@ class Interpreter:
                 })
                 return None, False
 
-            # Unknown Call shape
             return None, False
 
         raise RuntimeErrorLoom(f"Unsupported verb: {canon_verb}")
@@ -424,17 +413,18 @@ class Interpreter:
         if capabilities is not None:
             self._caps = capabilities
         enforced = self._enforce_default if enforce_capabilities is None else bool(enforce_capabilities)
-        self._enforce_default = enforced  # update
+        self._enforce_default = enforced
 
         self.env = dict(inputs or {})
         self.evaluator = Evaluator(self.env)
-        self.receipt.update({
-            "engine": "interpreter",
-            "ask": [],
-            "logs": [],
-            "callGraph": [],
-            "steps": [],
-        })
+        self.receipt.update({"engine": "interpreter", "ask": [], "logs": [], "callGraph": [], "steps": []})
         res, did_return = self.exec_block({"steps": self._extract_flow(m)})
         self.receipt["env"] = dict(self.env)
         return res
+
+# xml parse helper (safe-ish ET wrapper to normalize parser behavior)
+def xml_safe_fromstring(text: str):
+    try:
+        return ET.fromstring(text or "")
+    except Exception:
+        return ET.fromstring("<root/>")
