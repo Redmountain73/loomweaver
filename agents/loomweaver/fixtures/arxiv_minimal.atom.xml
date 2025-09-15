@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>arXiv Query Results</title>
+  <updated>2025-01-01T00:00:00Z</updated>
+  <entry>
+    <id>http://arxiv.org/abs/1234.5678v1</id>
+    <title>Graph Neural Networks: A Tiny Fixture</title>
+    <updated>2025-01-01T00:00:00Z</updated>
+    <summary>This is a minimal Atom entry used for deterministic CI tests.</summary>
+    <author><name>Fixture Author</name></author>
+  </entry>
+</feed>

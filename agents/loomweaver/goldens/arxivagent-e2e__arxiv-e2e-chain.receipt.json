@@ -1,0 +1,50 @@
+{
+  "ask": [],
+  "callGraph": [],
+  "engine": "interpreter",
+  "env": {
+    "bytes": 471,
+    "query": "all:graph",
+    "report": "Found paper: Graph Neural Networks: A Tiny Fixture",
+    "status": 200,
+    "title": "Graph Neural Networks: A Tiny Fixture",
+    "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<feed xmlns=\"http://www.w3.org/2005/Atom\">\n  <title>arXiv Query Results</title>\n  <updated>2025-01-01T00:00:00Z</updated>\n  <entry>\n    <id>http://arxiv.org/abs/1234.5678v1</id>\n    <title>Graph Neural Networks: A Tiny Fixture</title>\n    <updated>2025-01-01T00:00:00Z</updated>\n    <summary>This is a minimal Atom entry used for deterministic CI tests.</summary>\n    <author><name>Fixture Author</name></author>\n  </entry>\n</feed>\n"
+  },
+  "logs": [],
+  "steps": [
+    {
+      "bytes": 471,
+      "event": "fetch",
+      "rawVerb": null,
+      "status": 200,
+      "truncated": false,
+      "url": "fixture://agents/loomweaver/fixtures/arxiv_minimal.atom.xml",
+      "verb": "Call"
+    },
+    {
+      "event": "parse",
+      "op": "xml.firstTitle",
+      "rawVerb": null,
+      "verb": "Call"
+    },
+    {
+      "event": "make",
+      "name": "report",
+      "rawVerb": null,
+      "value": "Found paper: Graph Neural Networks: A Tiny Fixture",
+      "verb": "Make"
+    },
+    {
+      "event": "show",
+      "rawVerb": null,
+      "value": "Found paper: Graph Neural Networks: A Tiny Fixture",
+      "verb": "Show"
+    },
+    {
+      "event": "return",
+      "rawVerb": null,
+      "value": "Found paper: Graph Neural Networks: A Tiny Fixture",
+      "verb": "Return"
+    }
+  ]
+}
