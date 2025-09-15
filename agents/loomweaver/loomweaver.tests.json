@@ -115,7 +115,7 @@
       "name": "report-result-formats"
     },
     {
-      "expectContains": "Found paper:",
+      "expected": "Found paper: Graph Neural Networks: A Tiny Fixture",
       "inputs": {
         "query": "all:graph"
       },
