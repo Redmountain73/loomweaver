@@ -90,6 +90,34 @@
         "name": "Arxiv Demo Module"
       },
       "name": "arxiv-ctype"
+    },
+    {
+      "enforce": true,
+      "expectError": "network fetch disallowed under capability enforcement",
+      "inputs": {},
+      "module": "Arxiv Demo Module",
+      "moduleAst": {
+        "flow": [
+          {
+            "args": {
+              "into": "xml",
+              "url": "fixture://agents/loomweaver/fixtures/arxiv_minimal.atom.xml"
+            },
+            "verb": "Fetch"
+          },
+          {
+            "args": {
+              "expr": {
+                "name": "xml",
+                "type": "Identifier"
+              }
+            },
+            "verb": "Return"
+          }
+        ],
+        "name": "Arxiv Demo Module"
+      },
+      "name": "arxiv-enforce-block"
     }
   ]
 }

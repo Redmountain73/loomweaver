@@ -1,0 +1,15 @@
+{
+  "ask": [],
+  "callGraph": [],
+  "engine": "interpreter",
+  "env": {},
+  "logs": [
+    {
+      "action": "blocked",
+      "cap": "network:fetch",
+      "event": "capability",
+      "level": "error"
+    }
+  ],
+  "steps": []
+}
