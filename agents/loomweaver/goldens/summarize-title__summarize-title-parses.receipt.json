@@ -1,0 +1,24 @@
+{
+  "ask": [],
+  "callGraph": [],
+  "engine": "interpreter",
+  "env": {
+    "title": "",
+    "xml": "<entry><title>Sample</title></entry>"
+  },
+  "logs": [],
+  "steps": [
+    {
+      "event": "parse",
+      "op": "xml.firstTitle",
+      "rawVerb": null,
+      "verb": "Call"
+    },
+    {
+      "event": "return",
+      "rawVerb": null,
+      "value": "",
+      "verb": "Return"
+    }
+  ]
+}

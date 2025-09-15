@@ -8,11 +8,13 @@
 - SPEC-002: Call can fetch with args.url / args.http.
   * args.url may be an expression OR a string with {name} placeholders.
   * Enforcement ON: block fixture://; http(s) only if domain allowlisted.
+  * Built-in non-network op: args.op == "xml.firstTitle" parses first Atom <entry><title>.
 """
 
 from typing import Any, Dict, List, Optional, Tuple
 import re
 from urllib.parse import urlparse
+import xml.etree.ElementTree as ET
 
 from .names import normalize_module_slug
 from .http_client import DEFAULT_TIMEOUT, DEFAULT_MAX_BYTES
@@ -302,8 +304,37 @@ class Interpreter:
             return None, False
 
         if canon_verb == "Call":
+            # Built-in, non-network op: XML first title extraction
+            if isinstance(args.get("op"), str) and args.get("op") == "xml.firstTitle":
+                # source may be provided as an Identifier node via args.fromExpr or a var name via args.from
+                src_text = None
+                if "fromExpr" in args and isinstance(args["fromExpr"], dict):
+                    src_text = self.evaluator.eval(args["fromExpr"])
+                elif "from" in args:
+                    name = args["from"]
+                    if isinstance(name, str):
+                        src_text = self.env.get(name)
+                if not isinstance(src_text, str):
+                    src_text = "" if src_text is None else str(src_text)
+
+                title = ""
+                try:
+                    # Try Atom namespace; fallback to no namespace
+                    ns = {"atom": "http://www.w3.org/2005/Atom"}
+                    root = ET.fromstring(src_text)
+                    node = root.find(".//atom:entry/atom:title", ns) or root.find(".//entry/title")
+                    if node is not None and node.text is not None:
+                        title = node.text.strip()
+                except Exception:
+                    title = ""
+
+                if isinstance(args.get("into"), str):
+                    self.env[args["into"]] = title
+                self._append_step({"event": "parse", "op": "xml.firstTitle", "verb": "Call"})
+                return None, False
+
             # Path A: module-to-module bookkeeping
-            if "module" in args and "url" not in args and "http" not in args:
+            if "module" in args and "url" not in args and "http" not in args and "op" not in args:
                 target_raw = args.get("module")
                 target_norm = normalize_module_slug(target_raw or "")
                 self.receipt["callGraph"].append({"from": None, "to": target_raw})
@@ -333,14 +364,12 @@ class Interpreter:
                             })
                             raise RuntimeErrorLoom("network fetch disallowed under capability enforcement")
                     else:
-                        # Non-http(s) schemes are blocked by default under enforcement
                         self.receipt["logs"].append({
                             "level": "error", "event": "capability",
                             "cap": "network:fetch", "action": "blocked-scheme", "url": url
                         })
                         raise RuntimeErrorLoom("network fetch disallowed under capability enforcement")
 
-                # Perform fetch (only reaches here if allowed or enforcement off)
                 timeout = float(args.get("timeout") or DEFAULT_TIMEOUT)
                 max_bytes = int(args.get("maxBytes") or DEFAULT_MAX_BYTES)
                 result = self._fetcher(url, timeout=timeout, max_bytes=max_bytes)

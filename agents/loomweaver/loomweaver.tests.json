@@ -1,29 +1,118 @@
 {
   "tests": [
     {
-      "module": "Greeting Module",
-      "inputs": { "name": "Alice" },
-      "expect": "Alice"
+      "expect": "Alice",
+      "inputs": {
+        "name": "Alice"
+      },
+      "module": "Greeting Module"
     },
     {
-      "module": "Greeting Module",
-      "inputs": { "name": "" },
-      "expect": "anonymous user"
+      "expect": "anonymous user",
+      "inputs": {
+        "name": ""
+      },
+      "module": "Greeting Module"
     },
     {
-      "module": "Score Gate Module",
-      "inputs": { "score": 95 },
-      "expect": "pass"
+      "expect": "pass",
+      "inputs": {
+        "score": 95
+      },
+      "module": "Score Gate Module"
     },
     {
-      "module": "Score Gate Module",
-      "inputs": { "score": 42 },
-      "expect": "fail"
+      "expect": "fail",
+      "inputs": {
+        "score": 42
+      },
+      "module": "Score Gate Module"
     },
     {
-      "module": "Echo Module",
-      "inputs": { "name": "Bob" },
-      "expect": "Bob"
+      "expect": "Bob",
+      "inputs": {
+        "name": "Bob"
+      },
+      "module": "Echo Module"
+    },
+    {
+      "expected": "Sample",
+      "inputs": {
+        "xml": "<entry><title>Sample</title></entry>"
+      },
+      "module": "Summarize Title",
+      "moduleAst": {
+        "flow": [
+          {
+            "args": {
+              "from": "xml",
+              "into": "title",
+              "op": "xml.firstTitle"
+            },
+            "verb": "Call"
+          },
+          {
+            "args": {
+              "expr": {
+                "name": "title",
+                "type": "Identifier"
+              }
+            },
+            "verb": "Return"
+          }
+        ],
+        "name": "Summarize Title"
+      },
+      "name": "summarize-title-parses"
+    },
+    {
+      "expected": "Found paper: Graph Neural Nets",
+      "inputs": {
+        "title": "Graph Neural Nets"
+      },
+      "module": "Report Result",
+      "moduleAst": {
+        "flow": [
+          {
+            "args": {
+              "expr": {
+                "left": {
+                  "type": "String",
+                  "value": "Found paper: "
+                },
+                "op": "+",
+                "right": {
+                  "name": "title",
+                  "type": "Identifier"
+                },
+                "type": "Binary"
+              },
+              "name": "report"
+            },
+            "verb": "Make"
+          },
+          {
+            "args": {
+              "expr": {
+                "name": "report",
+                "type": "Identifier"
+              }
+            },
+            "verb": "Show"
+          },
+          {
+            "args": {
+              "expr": {
+                "name": "report",
+                "type": "Identifier"
+              }
+            },
+            "verb": "Return"
+          }
+        ],
+        "name": "Report Result"
+      },
+      "name": "report-result-formats"
     }
   ]
 }

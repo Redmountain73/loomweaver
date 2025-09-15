@@ -1,0 +1,31 @@
+{
+  "ask": [],
+  "callGraph": [],
+  "engine": "interpreter",
+  "env": {
+    "report": "Found paper: Graph Neural Nets",
+    "title": "Graph Neural Nets"
+  },
+  "logs": [],
+  "steps": [
+    {
+      "event": "make",
+      "name": "report",
+      "rawVerb": null,
+      "value": "Found paper: Graph Neural Nets",
+      "verb": "Make"
+    },
+    {
+      "event": "show",
+      "rawVerb": null,
+      "value": "Found paper: Graph Neural Nets",
+      "verb": "Show"
+    },
+    {
+      "event": "return",
+      "rawVerb": null,
+      "value": "Found paper: Graph Neural Nets",
+      "verb": "Return"
+    }
+  ]
+}
