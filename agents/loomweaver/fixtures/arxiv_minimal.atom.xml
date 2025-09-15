@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en">
+  <title type="text">arXiv Query: all:graph</title>
+  <id>http://arxiv.org/api/</id>
+  <updated>2025-01-01T00:00:00Z</updated>
+  <entry>
+    <id>http://arxiv.org/abs/1234.56789v1</id>
+    <updated>2025-01-01T00:00:00Z</updated>
+    <published>2024-12-31T23:59:59Z</published>
+    <title>Graph Things</title>
+    <summary>Minimal fixture payload for Loomweaver tests.</summary>
+    <author><name>Test Author</name></author>
+    <link rel="alternate" type="text/html" href="http://arxiv.org/abs/1234.56789v1"/>
+    <link title="pdf" rel="related" type="application/pdf" href="http://arxiv.org/pdf/1234.56789v1"/>
+    <category term="cs.LG" scheme="http://arxiv.org/schemas/atom"/>
+  </entry>
+</feed>

@@ -1,0 +1,27 @@
+{
+  "ask": [],
+  "callGraph": [],
+  "engine": "interpreter",
+  "env": {
+    "ctype": "application/atom+xml",
+    "status": 200
+  },
+  "logs": [],
+  "steps": [
+    {
+      "bytes": 794,
+      "event": "fetch",
+      "rawVerb": null,
+      "status": 200,
+      "truncated": false,
+      "url": "fixture://agents/loomweaver/fixtures/arxiv_minimal.atom.xml",
+      "verb": "Call"
+    },
+    {
+      "event": "return",
+      "rawVerb": null,
+      "value": "application/atom+xml",
+      "verb": "Return"
+    }
+  ]
+}

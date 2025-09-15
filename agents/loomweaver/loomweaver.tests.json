@@ -1,29 +1,95 @@
 {
   "tests": [
     {
-      "module": "Greeting Module",
-      "inputs": { "name": "Alice" },
-      "expect": "Alice"
+      "expect": "Alice",
+      "inputs": {
+        "name": "Alice"
+      },
+      "module": "Greeting Module"
     },
     {
-      "module": "Greeting Module",
-      "inputs": { "name": "" },
-      "expect": "anonymous user"
+      "expect": "anonymous user",
+      "inputs": {
+        "name": ""
+      },
+      "module": "Greeting Module"
     },
     {
-      "module": "Score Gate Module",
-      "inputs": { "score": 95 },
-      "expect": "pass"
+      "expect": "pass",
+      "inputs": {
+        "score": 95
+      },
+      "module": "Score Gate Module"
     },
     {
-      "module": "Score Gate Module",
-      "inputs": { "score": 42 },
-      "expect": "fail"
+      "expect": "fail",
+      "inputs": {
+        "score": 42
+      },
+      "module": "Score Gate Module"
     },
     {
-      "module": "Echo Module",
-      "inputs": { "name": "Bob" },
-      "expect": "Bob"
+      "expect": "Bob",
+      "inputs": {
+        "name": "Bob"
+      },
+      "module": "Echo Module"
+    },
+    {
+      "expected": 200,
+      "inputs": {},
+      "module": "Arxiv Demo Module",
+      "moduleAst": {
+        "flow": [
+          {
+            "args": {
+              "intoStatus": "status",
+              "intoType": "ctype",
+              "url": "fixture://agents/loomweaver/fixtures/arxiv_minimal.atom.xml"
+            },
+            "verb": "Fetch"
+          },
+          {
+            "args": {
+              "expr": {
+                "name": "status",
+                "type": "Identifier"
+              }
+            },
+            "verb": "Return"
+          }
+        ],
+        "name": "Arxiv Demo Module"
+      },
+      "name": "arxiv-status"
+    },
+    {
+      "expected": "application/atom+xml",
+      "inputs": {},
+      "module": "Arxiv Demo Module",
+      "moduleAst": {
+        "flow": [
+          {
+            "args": {
+              "intoStatus": "status",
+              "intoType": "ctype",
+              "url": "fixture://agents/loomweaver/fixtures/arxiv_minimal.atom.xml"
+            },
+            "verb": "Fetch"
+          },
+          {
+            "args": {
+              "expr": {
+                "name": "ctype",
+                "type": "Identifier"
+              }
+            },
+            "verb": "Return"
+          }
+        ],
+        "name": "Arxiv Demo Module"
+      },
+      "name": "arxiv-ctype"
     }
   ]
 }
