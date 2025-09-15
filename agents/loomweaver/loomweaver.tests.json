@@ -118,6 +118,37 @@
         "name": "Arxiv Demo Module"
       },
       "name": "arxiv-enforce-block"
+    },
+    {
+      "expectContains": "entry",
+      "inputs": {
+        "query": "all:graph"
+      },
+      "module": "Arxiv Search",
+      "moduleAst": {
+        "flow": [
+          {
+            "args": {
+              "into": "xml",
+              "intoBytes": "bytes",
+              "intoStatus": "status",
+              "url": "fixture://agents/loomweaver/fixtures/arxiv_minimal.atom.xml"
+            },
+            "verb": "Fetch"
+          },
+          {
+            "args": {
+              "expr": {
+                "name": "xml",
+                "type": "Identifier"
+              }
+            },
+            "verb": "Return"
+          }
+        ],
+        "name": "Arxiv Search"
+      },
+      "name": "arxiv-search-contains-entry"
     }
   ]
 }

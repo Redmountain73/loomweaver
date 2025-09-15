@@ -1,0 +1,29 @@
+{
+  "ask": [],
+  "callGraph": [],
+  "engine": "interpreter",
+  "env": {
+    "bytes": 794,
+    "query": "all:graph",
+    "status": 200,
+    "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<feed xmlns=\"http://www.w3.org/2005/Atom\" xml:lang=\"en\">\n  <title type=\"text\">arXiv Query: all:graph</title>\n  <id>http://arxiv.org/api/</id>\n  <updated>2025-01-01T00:00:00Z</updated>\n  <entry>\n    <id>http://arxiv.org/abs/1234.56789v1</id>\n    <updated>2025-01-01T00:00:00Z</updated>\n    <published>2024-12-31T23:59:59Z</published>\n    <title>Graph Things</title>\n    <summary>Minimal fixture payload for Loomweaver tests.</summary>\n    <author><name>Test Author</name></author>\n    <link rel=\"alternate\" type=\"text/html\" href=\"http://arxiv.org/abs/1234.56789v1\"/>\n    <link title=\"pdf\" rel=\"related\" type=\"application/pdf\" href=\"http://arxiv.org/pdf/1234.56789v1\"/>\n    <category term=\"cs.LG\" scheme=\"http://arxiv.org/schemas/atom\"/>\n  </entry>\n</feed>\n"
+  },
+  "logs": [],
+  "steps": [
+    {
+      "bytes": 794,
+      "event": "fetch",
+      "rawVerb": null,
+      "status": 200,
+      "truncated": false,
+      "url": "fixture://agents/loomweaver/fixtures/arxiv_minimal.atom.xml",
+      "verb": "Call"
+    },
+    {
+      "event": "return",
+      "rawVerb": null,
+      "value": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<feed xmlns=\"http://www.w3.org/2005/Atom\" xml:lang=\"en\">\n  <title type=\"text\">arXiv Query: all:graph</title>\n  <id>http://arxiv.org/api/</id>\n  <updated>2025-01-01T00:00:00Z</updated>\n  <entry>\n    <id>http://arxiv.org/abs/1234.56789v1</id>\n    <updated>2025-01-01T00:00:00Z</updated>\n    <published>2024-12-31T23:59:59Z</published>\n    <title>Graph Things</title>\n    <summary>Minimal fixture payload for Loomweaver tests.</summary>\n    <author><name>Test Author</name></author>\n    <link rel=\"alternate\" type=\"text/html\" href=\"http://arxiv.org/abs/1234.56789v1\"/>\n    <link title=\"pdf\" rel=\"related\" type=\"application/pdf\" href=\"http://arxiv.org/pdf/1234.56789v1\"/>\n    <category term=\"cs.LG\" scheme=\"http://arxiv.org/schemas/atom\"/>\n  </entry>\n</feed>\n",
+      "verb": "Return"
+    }
+  ]
+}
