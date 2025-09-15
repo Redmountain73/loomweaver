@@ -3,7 +3,7 @@
   "callGraph": [],
   "engine": "interpreter",
   "env": {
-    "title": "",
+    "title": "Sample",
     "xml": "<entry><title>Sample</title></entry>"
   },
   "logs": [],
@@ -17,7 +17,7 @@
     {
       "event": "return",
       "rawVerb": null,
-      "value": "",
+      "value": "Sample",
       "verb": "Return"
     }
   ]

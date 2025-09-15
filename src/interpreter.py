@@ -306,7 +306,6 @@ class Interpreter:
         if canon_verb == "Call":
             # Built-in, non-network op: XML first title extraction
             if isinstance(args.get("op"), str) and args.get("op") == "xml.firstTitle":
-                # source may be provided as an Identifier node via args.fromExpr or a var name via args.from
                 src_text = None
                 if "fromExpr" in args and isinstance(args["fromExpr"], dict):
                     src_text = self.evaluator.eval(args["fromExpr"])
@@ -319,10 +318,16 @@ class Interpreter:
 
                 title = ""
                 try:
-                    # Try Atom namespace; fallback to no namespace
                     ns = {"atom": "http://www.w3.org/2005/Atom"}
                     root = ET.fromstring(src_text)
-                    node = root.find(".//atom:entry/atom:title", ns) or root.find(".//entry/title")
+                    # Try Atom entry/title
+                    node = root.find(".//atom:entry/atom:title", ns)
+                    if node is None:
+                        # Try Atom title anywhere
+                        node = root.find(".//atom:title", ns)
+                    if node is None:
+                        # No namespace: title anywhere (covers <entry><title>…</title></entry>)
+                        node = root.find(".//title") or root.find("title")
                     if node is not None and node.text is not None:
                         title = node.text.strip()
                 except Exception:
