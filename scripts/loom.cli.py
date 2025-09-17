@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# // Codex smoke test – no logic changed
 """
 Loom CLI (friendly wrapper)
 
