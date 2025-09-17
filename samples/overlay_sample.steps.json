@@ -1,0 +1,5 @@
+[
+  { "verb": "Summarize", "args": { "path": "fixtures/arxiv.atom.xml" } },
+  { "verb": "Report", "args": { "text": "Finished" } },
+  { "verb": "Teleport", "args": { "to": "Orion" } }
+]

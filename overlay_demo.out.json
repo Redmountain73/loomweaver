@@ -1,0 +1,67 @@
+{
+  "canonical": [
+    {
+      "verb": "Call",
+      "args": {
+        "op": "xml.firstTitle",
+        "defaultInto": "summary",
+        "path": "fixtures/arxiv.atom.xml"
+      }
+    },
+    {
+      "verb": "Make",
+      "args": {
+        "op": "format.compose",
+        "text": "Finished"
+      }
+    },
+    {
+      "verb": "Show",
+      "args": {
+        "sink": "stdout",
+        "text": "Finished"
+      }
+    },
+    {
+      "verb": "Teleport",
+      "args": {
+        "to": "Orion"
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "rawVerb": "Summarize",
+      "mappedVerb": "Call",
+      "overlayDomain": "core",
+      "overlayVersion": "0.1.0",
+      "capabilityCheck": "pass",
+      "notes": null
+    },
+    {
+      "rawVerb": "Report",
+      "mappedVerb": [
+        "Make",
+        "Show"
+      ],
+      "overlayDomain": "core",
+      "overlayVersion": "0.1.0",
+      "capabilityCheck": "pass",
+      "notes": null
+    },
+    {
+      "rawVerb": "Teleport",
+      "mappedVerb": null,
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "capabilityCheck": "n/a",
+      "notes": "No overlay mapping; left as-is."
+    }
+  ],
+  "warnings": [
+    "Unknown verb: Teleport"
+  ],
+  "overlaysLoaded": [
+    "core"
+  ]
+}

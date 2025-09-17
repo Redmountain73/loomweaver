@@ -1,13 +1,19 @@
 {
   "engine": "vm",
   "module": {
-    "hash": "sha256:1bcf7d0d99152520442541767da6d82f531c65c1c99d4601f097a1ac426e4934",
-    "path": "Modules\\vm_choose_repeat_call.loom"
+    "name": "vm_choose_repeat_call.loom",
+    "astVersion": "2.1.0",
+    "hash": "sha256(normalizedSource)"
   },
-  "reason": "Repeat requires iterator name and iterable expression",
   "run": {
-    "timestamp": "2025-08-31T22:33:52Z",
-    "uuid": "38c65203-f9f4-4554-bb2b-fabee0568037"
+    "timestamp": "2025-09-15T21:48:40Z",
+    "uuid": "832a5ab5-9c49-419c-b5f0-f87ddf801326"
   },
-  "status": "error"
+  "logs": [],
+  "steps": [],
+  "callGraph": [],
+  "ask": [],
+  "env": {},
+  "status": "error",
+  "reason": "VM engine not wired (or no known entrypoint found). Tried: src.compiler.run_loom_text_with_vm, src.vm.run_loom_text_with_vm, src.(compiler|vm|interpreter).run_module_from_file, python -m src.loom_cli (subprocess fallback). If you want overlay-only expansion, use: `python -m src.overlay_cli --in samples/overlay_sample.steps.json --pretty`."
 }
