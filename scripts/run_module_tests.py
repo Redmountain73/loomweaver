@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional
+import copy
 import argparse
 import json
 import sys
@@ -9,6 +10,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.interpreter import Interpreter  # noqa: E402
 from src.names import normalize_module_slug  # noqa: E402
+from src.overlays import load_overlays, ExpandOptions, expand_module_ast  # noqa: E402
 
 def load_json(path: Path) -> Any:
     with path.open("r", encoding="utf-8") as f:
@@ -100,6 +102,9 @@ def main() -> int:
     ap.add_argument("--golden-dir", required=True)
     ap.add_argument("--strict", action="store_true")
     ap.add_argument("--snapshot", action="store_true")
+    ap.add_argument("--overlay", action="append", default=[], help="Overlay pack to include (repeatable)")
+    ap.add_argument("--no-unknown-verbs", action="store_true", help="Error on verbs without overlay mapping")
+    ap.add_argument("--enforce-capabilities", action="store_true", help="Block missing overlay capabilities")
     args = ap.parse_args()
 
     mods_doc = load_json(Path(args.modules))
@@ -107,6 +112,13 @@ def main() -> int:
     tests = list(tests_doc.get("tests") or [])
 
     failures: List[str] = []
+
+    overlays = load_overlays(args.overlay)
+    expand_opts = ExpandOptions(
+        overlay_names=list(args.overlay or []),
+        no_unknown_verbs=bool(args.no_unknown_verbs),
+        enforce_capabilities=bool(args.enforce_capabilities),
+    )
 
     for i, t in enumerate(tests, start=1):
         module_name = t.get("module") or t.get("name") or "Unnamed Module"
@@ -121,8 +133,14 @@ def main() -> int:
             failures.append(msg)
             continue
 
-        interp = Interpreter()
-        actual = interp.run(mod_ast, inputs=inputs)
+        expanded_mod, overlay_warns = expand_module_ast(mod_ast, overlays, expand_opts)
+        interp = Interpreter(enforce_capabilities=bool(args.enforce_capabilities))
+        actual = interp.run(copy.deepcopy(expanded_mod), inputs=inputs)
+        if overlay_warns:
+            logs = interp.receipt.setdefault("logs", [])
+            for warn in overlay_warns:
+                logs.append({"level": "warning", "event": "overlay", "message": warn})
+        interp.receipt.setdefault("overlaysLoaded", ["core"] + list(args.overlay or []))
 
         ok_value = (actual == expected)
 

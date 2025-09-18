@@ -34,6 +34,12 @@ def cmd_validate(args: argparse.Namespace) -> int:
     ]
     if args.strict:
         cmd.append("--strict")
+    for name in args.overlay:
+        cmd.extend(["--overlay", name])
+    if args.no_unknown_verbs:
+        cmd.append("--no-unknown-verbs")
+    if args.enforce_capabilities:
+        cmd.append("--enforce-capabilities")
     return run(cmd)
 
 def cmd_test(args: argparse.Namespace) -> int:
@@ -48,6 +54,12 @@ def cmd_test(args: argparse.Namespace) -> int:
         cmd.append("--strict")
     if args.snapshot:
         cmd.append("--snapshot")
+    for name in args.overlay:
+        cmd.extend(["--overlay", name])
+    if args.no_unknown_verbs:
+        cmd.append("--no-unknown-verbs")
+    if args.enforce_capabilities:
+        cmd.append("--enforce-capabilities")
     return run(cmd)
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -59,6 +71,10 @@ def cmd_run(args: argparse.Namespace) -> int:
     ]
     if args.enforce_capabilities:
         cmd.append("--enforce-capabilities")
+    for name in args.overlay:
+        cmd.extend(["--overlay", name])
+    if args.no_unknown_verbs:
+        cmd.append("--no-unknown-verbs")
     cmd.extend(args.kv or [])
     return run(cmd)
 
@@ -68,16 +84,24 @@ def main() -> int:
 
     ap_val = sub.add_parser("validate", help="validate canonical AST + program + caps")
     ap_val.add_argument("--strict", action="store_true")
+    ap_val.add_argument("--overlay", action="append", default=[], help="Overlay pack to include (repeatable)")
+    ap_val.add_argument("--no-unknown-verbs", action="store_true")
+    ap_val.add_argument("--enforce-capabilities", action="store_true")
     ap_val.set_defaults(func=cmd_validate)
 
     ap_test = sub.add_parser("test", help="run loomweaver module tests")
     ap_test.add_argument("--strict", action="store_true", help="fail on any mismatch")
     ap_test.add_argument("--snapshot", action="store_true", help="(re)write golden receipts")
+    ap_test.add_argument("--overlay", action="append", default=[], help="Overlay pack to include (repeatable)")
+    ap_test.add_argument("--no-unknown-verbs", action="store_true")
+    ap_test.add_argument("--enforce-capabilities", action="store_true")
     ap_test.set_defaults(func=cmd_test)
 
     ap_run = sub.add_parser("run", help="run a single module with inputs")
     ap_run.add_argument("--module", required=True, help="module name (raw)")
     ap_run.add_argument("--enforce-capabilities", action="store_true")
+    ap_run.add_argument("--overlay", action="append", default=[], help="Overlay pack to include (repeatable)")
+    ap_run.add_argument("--no-unknown-verbs", action="store_true")
     ap_run.add_argument("kv", nargs="*", help="inputs as name=value")
     ap_run.set_defaults(func=cmd_run)
 

@@ -8,6 +8,7 @@ sys.path.insert(0, str(ROOT))
 
 from src.interpreter import Interpreter  # noqa: E402
 from src.names import normalize_module_slug  # noqa: E402
+from src.overlays import load_overlays, ExpandOptions, expand_module_ast  # noqa: E402
 
 DEFAULT_MODULES = ROOT / "agents" / "loomweaver" / "loomweaver.modules.ast.json"
 DEFAULT_CAPS    = ROOT / "agents" / "loomweaver" / "loomweaver.capabilities.json"
@@ -34,6 +35,8 @@ def main():
     ap.add_argument("--modules", default=str(DEFAULT_MODULES))
     ap.add_argument("--module", required=True, help="module name (raw)")
     ap.add_argument("--enforce-capabilities", action="store_true")
+    ap.add_argument("--overlay", action="append", default=[], help="Overlay pack to include (repeatable)")
+    ap.add_argument("--no-unknown-verbs", action="store_true", help="Error on verbs without overlay mapping")
     ap.add_argument("--capabilities", default=str(DEFAULT_CAPS), help="capabilities JSON path")
     ap.add_argument("kv", nargs="*", help="inputs as name=value")
     args = ap.parse_args()
@@ -52,6 +55,14 @@ def main():
         print(f"Module not found: {args.module}", file=sys.stderr)
         return 1
 
+    overlays = load_overlays(args.overlay)
+    expand_opts = ExpandOptions(
+        overlay_names=list(args.overlay or []),
+        no_unknown_verbs=bool(args.no_unknown_verbs),
+        enforce_capabilities=bool(args.enforce_capabilities),
+    )
+    mod, overlay_warns = expand_module_ast(mod, overlays, expand_opts)
+
     inputs = {}
     for pair in args.kv:
         if "=" in pair:
@@ -60,6 +71,11 @@ def main():
 
     interp = Interpreter(enforce_capabilities=bool(args.enforce_capabilities), capabilities=caps_doc)
     result = interp.run(mod, inputs=inputs)  # flags/ caps set in constructor
+    if overlay_warns:
+        logs = interp.receipt.setdefault("logs", [])
+        for warn in overlay_warns:
+            logs.append({"level": "warning", "event": "overlay", "message": warn})
+    interp.receipt.setdefault("overlaysLoaded", ["core"] + list(args.overlay or []))
     if result is not None:
         print(result)
     return 0

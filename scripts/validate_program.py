@@ -8,7 +8,10 @@
 #     --strict: same as default (errors -> nonzero)
 #     --warnings-as-errors: warnings ALSO cause nonzero
 from __future__ import annotations
-import argparse, json, re, sys
+import argparse
+import json
+import re
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -17,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.names import normalize_module_slug  # noqa: E402
+from src.overlays import load_overlays, ExpandOptions, expand_modules_doc  # noqa: E402
 
 try:
     import jsonschema
@@ -143,6 +147,9 @@ def main(argv: List[str] | None = None) -> int:
     ap.add_argument("--capabilities", required=False, help="Capabilities JSON")
     ap.add_argument("--strict", action="store_true", help="nonzero exit on schema/logic errors")
     ap.add_argument("--warnings-as-errors", action="store_true", help="treat warnings as errors (nonzero exit)")
+    ap.add_argument("--overlay", action="append", default=[], help="Overlay pack to include (repeatable)")
+    ap.add_argument("--no-unknown-verbs", action="store_true", help="Error on verbs without overlay mapping")
+    ap.add_argument("--enforce-capabilities", action="store_true", help="Block missing overlay capabilities")
     args = ap.parse_args(argv)
 
     infos: list[str] = []
@@ -158,6 +165,18 @@ def main(argv: List[str] | None = None) -> int:
     except Exception as e:
         print(f"Failed to read input JSON: {e}")
         return 2
+
+    overlay_warnings: List[str] = []
+    try:
+        overlays = load_overlays(args.overlay)
+        expand_opts = ExpandOptions(
+            overlay_names=list(args.overlay or []),
+            no_unknown_verbs=bool(args.no_unknown_verbs),
+            enforce_capabilities=bool(args.enforce_capabilities),
+        )
+        modules, overlay_warnings = expand_modules_doc(modules, overlays, expand_opts)
+    except Exception as e:
+        errors.append(f"Overlay expansion failed: {e}")
 
     # Combine + normalize
     combined = dict(program)
@@ -187,6 +206,9 @@ def main(argv: List[str] | None = None) -> int:
         errors.append("Program.name missing")
     if not combined.get("modules"):
         errors.append("Program.modules empty (combined)")
+
+    for warn in overlay_warnings:
+        warnings.append(f"[overlay] {warn}")
 
     # Schema validation (offline)
     if jsonschema is None or Draft202012Validator is None:

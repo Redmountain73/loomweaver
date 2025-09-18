@@ -16,11 +16,20 @@ Behavior:
 """
 
 from __future__ import annotations
-import argparse, json, os, sys, time, uuid
+import argparse
+import json
+import os
+import sys
+import time
+import uuid
 from typing import Any, Dict, List, Tuple
 
 # Import the shim instead of compiler to avoid modifying existing runtime files
 from .vm_shim import run_loom_text_with_vm
+
+
+def _verify_stub(_: Dict[str, Any]) -> Dict[str, Any]:
+    return {"warnings": [], "errors": []}
 
 def parse_kv_pairs(pairs: List[str]) -> Dict[str, Any]:
     out: Dict[str, Any] = {}
@@ -68,6 +77,7 @@ def main(argv: List[str] | None = None) -> int:
     ap.add_argument("--print-receipt", action="store_true", help="Print receipt JSON to stdout")
     ap.add_argument("--result-only", action="store_true", help="Print only the result to stdout")
     ap.add_argument("--receipt-out", help="Write receipt JSON to this file")
+    ap.add_argument("--verify", action="store_true", help="Attach verifier (warnings-only) stub")
     args = ap.parse_args(argv)
 
     engine = "vm"
@@ -107,6 +117,8 @@ def main(argv: List[str] | None = None) -> int:
                 print(result)
             else:
                 print(json.dumps(result))
+        if args.verify:
+            receipt["verify"] = _verify_stub(receipt)
         write_receipt(args.receipt_out, receipt, args.print_receipt)
         return 0
 
@@ -114,6 +126,8 @@ def main(argv: List[str] | None = None) -> int:
         # Structured error receipt
         base["status"] = "error"
         base["reason"] = str(e)
+        if args.verify:
+            base["verify"] = _verify_stub(base)
         # For visibility in CLI usage:
         if args.print_logs:
             print(f"[vm] error: {e}", file=sys.stderr)

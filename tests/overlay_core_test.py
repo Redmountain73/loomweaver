@@ -3,9 +3,10 @@ import json
 import pytest
 
 from src.overlays import (
-    load_overlays, expand_steps, ExpandOptions,
+    load_overlays, expand_steps, expand_module_ast, ExpandOptions,
     xml_first_title, UnknownVerbError, CapabilityError
 )
+from src.interpreter import Interpreter
 
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 WITH_SPACES_ROOT = os.path.basename(REPO_ROOT)  # just to remind us paths may have spaces
@@ -93,3 +94,47 @@ def test_capabilities_warning_by_default_and_error_with_flag():
     )
     assert len(canon2) == 1
     assert receipts2[0].capabilityCheck == "pass"
+
+
+def test_expand_module_ast_attaches_lineage_metadata():
+    overlays = load_overlays([])
+    module = {
+        "name": "Reporter",
+        "astVersion": "2.1.0",
+        "flow": [{"verb": "Report", "args": {"text": "hi"}}],
+    }
+    expanded, warns = expand_module_ast(module, overlays, ExpandOptions())
+    assert warns == []
+    steps = expanded["flow"]
+    assert [s["verb"] for s in steps] == ["Make", "Show"]
+    for s in steps:
+        assert s["rawVerb"] == "Report"
+        assert s["overlayDomain"] == "core"
+        assert s["overlayVersion"] is not None
+        assert s["capabilityCheck"] in ("pass", "warn", "n/a")
+
+
+def test_interpreter_receipt_includes_lineage_fields():
+    step = {
+        "verb": "Show",
+        "args": {"expr": {"type": "String", "value": "done"}},
+        "rawVerb": "Explain",
+        "mappedVerb": "Show",
+        "overlayDomain": "core",
+        "overlayVersion": "0.1.0",
+        "capabilityCheck": "pass",
+    }
+    module = {
+        "name": "Lineage",
+        "astVersion": "2.1.0",
+        "flow": [step],
+    }
+    interp = Interpreter()
+    interp.run(module)
+    assert interp.receipt["steps"], "expected steps recorded"
+    for step in interp.receipt["steps"]:
+        assert "rawVerb" in step
+        assert "mappedVerb" in step
+        assert "overlayDomain" in step
+        assert "overlayVersion" in step
+        assert "capabilityCheck" in step
