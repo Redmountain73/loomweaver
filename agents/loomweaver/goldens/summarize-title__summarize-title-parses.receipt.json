@@ -7,16 +7,27 @@
     "xml": "<entry><title>Sample</title></entry>"
   },
   "logs": [],
+  "overlaysLoaded": [
+    "core"
+  ],
   "steps": [
     {
+      "capabilityCheck": "n/a",
       "event": "parse",
+      "mappedVerb": "Call",
       "op": "xml.firstTitle",
-      "rawVerb": null,
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Call",
       "verb": "Call"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "return",
-      "rawVerb": null,
+      "mappedVerb": "Return",
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Return",
       "value": "Sample",
       "verb": "Return"
     }

@@ -67,6 +67,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--graph-dot", metavar="PATH", help="Write callGraph as Graphviz DOT to PATH.")
     p.add_argument("--receipt-out", metavar="PATH", help="Write execution receipt to PATH (JSON).")
     p.add_argument("--verify", action="store_true", help="Run verifier (warnings-only) and attach to receipt.")
+    p.add_argument("--overlay", action="append", default=[], help="Overlay pack to include (repeatable).")
+    p.add_argument("--no-unknown-verbs", action="store_true", help="Error on verbs without overlay mapping.")
+    p.add_argument("--enforce-capabilities", action="store_true", help="Block missing overlay capabilities.")
     args = p.parse_args(argv)
 
     if not args.module:
@@ -115,7 +118,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     }
 
     try:
-        result, receipt = run_module_from_file(str(path), inputs=inputs)
+        result, receipt = run_module_from_file(
+            str(path),
+            inputs=inputs,
+            overlay_names=args.overlay,
+            no_unknown_verbs=args.no_unknown_verbs,
+            enforce_capabilities=args.enforce_capabilities,
+        )
         receipt.setdefault("engine", "interpreter")
         receipt.setdefault("module", {}).update(base["module"])
         receipt.setdefault("run", base["run"])

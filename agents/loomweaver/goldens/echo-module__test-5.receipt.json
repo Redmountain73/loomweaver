@@ -7,17 +7,28 @@
     "name": "Bob"
   },
   "logs": [],
+  "overlaysLoaded": [
+    "core"
+  ],
   "steps": [
     {
+      "capabilityCheck": "n/a",
       "event": "make",
+      "mappedVerb": "Make",
       "name": "echo",
-      "rawVerb": null,
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Make",
       "value": "Bob",
       "verb": "Make"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "return",
-      "rawVerb": null,
+      "mappedVerb": "Return",
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Return",
       "value": "Bob",
       "verb": "Return"
     }

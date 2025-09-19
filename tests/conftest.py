@@ -43,3 +43,21 @@ if "tokenizer" not in sys.modules:
             raise _tok_err  # type: ignore[misc]
         shim.tokenize = tokenize  # type: ignore[assignment]
     sys.modules["tokenizer"] = shim
+
+# Alias src.nl_comparatives -> nl_comparatives for legacy imports
+try:
+    from src import nl_comparatives as _nl_mod  # type: ignore[attr-defined]
+    _nl_err = None
+except Exception as _e:  # pragma: no cover
+    _nl_mod = None
+    _nl_err = _e
+
+if "nl_comparatives" not in sys.modules:
+    shim = types.ModuleType("nl_comparatives")
+    if _nl_mod is not None:
+        shim.parse_comparative = _nl_mod.parse_comparative  # type: ignore[attr-defined]
+    else:
+        def parse_comparative(*_args, **_kwargs):
+            raise _nl_err  # type: ignore[misc]
+        shim.parse_comparative = parse_comparative  # type: ignore[assignment]
+    sys.modules["nl_comparatives"] = shim

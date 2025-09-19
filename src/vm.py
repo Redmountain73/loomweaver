@@ -12,6 +12,10 @@ except Exception:
             "Install the optional dependency or configure the VM to use a different backend."
         )
 
+# Lightweight compatibility error type expected by tests.
+class TypeErrorLoom(TypeError):
+    """Minimal TypeError variant used by VM compatibility tests."""
+
 # Minimal placeholder so imports of VM type don't explode.
 class VM:
     def __init__(self, *_, **__):

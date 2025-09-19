@@ -13,7 +13,9 @@ iterate without breaking SPEC-002. Later we can hook this into the compiler.
 """
 
 from __future__ import annotations
-import json, os
+import copy
+import json
+import os
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -61,6 +63,16 @@ class ReceiptLineage:
     overlayVersion: Optional[str] = None
     capabilityCheck: str = "n/a"          # "pass" | "warn" | "fail" | "n/a"
     notes: Optional[str] = None
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "rawVerb": self.rawVerb,
+            "mappedVerb": self.mappedVerb,
+            "overlayDomain": self.overlayDomain,
+            "overlayVersion": self.overlayVersion,
+            "capabilityCheck": self.capabilityCheck,
+            "notes": self.notes,
+        }
 
 @dataclass
 class ExpandOptions:
@@ -133,6 +145,19 @@ def _capability_delta(required: List[str], granted: List[str]) -> List[str]:
     granted_set = set(granted or [])
     return sorted(list(required_set - granted_set))
 
+
+def _annotate_step(step: Dict[str, Any], lineage: ReceiptLineage) -> Dict[str, Any]:
+    """Return a deep-copied step annotated with lineage metadata."""
+    annotated = copy.deepcopy(step)
+    lineage_dict = lineage.to_dict()
+    # Remove helper notes unless explicitly needed downstream (kept for debugging).
+    lineage_payload = {k: v for k, v in lineage_dict.items() if k != "notes"}
+    # Ensure args dict exists for interpreter normalization downstream.
+    args = dict(annotated.get("args") or {})
+    annotated["args"] = args
+    annotated.update(lineage_payload)
+    return annotated
+
 def expand_steps(
     steps: List[Dict[str, Any]],
     overlays: Dict[str, OverlayMapping],
@@ -153,18 +178,34 @@ def expand_steps(
 
         mapping = overlays.get(raw)
         if not mapping:
+            if raw in CANONICAL_VERBS:
+                canon_step = copy.deepcopy(step)
+                canon_step["verb"] = raw
+                canon_step["args"] = dict(args)
+                lineage_entry = ReceiptLineage(
+                    rawVerb=raw,
+                    mappedVerb=raw,
+                    overlayDomain=None,
+                    overlayVersion=None,
+                    capabilityCheck="n/a",
+                    notes="canonical-pass-through"
+                )
+                canonical.append(_annotate_step(canon_step, lineage_entry))
+                lineage.append(lineage_entry)
+                continue
+
             msg = f"Unknown verb: {raw}"
             if opts.no_unknown_verbs:
                 raise UnknownVerbError(raw)
             warns.append(msg)
-            lineage.append(ReceiptLineage(
+            lineage_entry = ReceiptLineage(
                 rawVerb=raw,
                 mappedVerb=None,
                 capabilityCheck="n/a",
                 notes="No overlay mapping; left as-is."
-            ))
-            # Pass-through raw step (not ideal, but allowed in warn mode)
-            canonical.append(step)
+            )
+            canonical.append(_annotate_step(step, lineage_entry))
+            lineage.append(lineage_entry)
             continue
 
         # Capability check
@@ -179,6 +220,8 @@ def expand_steps(
                          f"(missing: {', '.join(missing)})")
 
         # Expand
+        annotated_steps: List[Dict[str, Any]] = []
+
         if isinstance(mapping.mappedVerb, list):
             # pipelined multi-verb mapping
             pipeline = mapping.mapping.get("pipeline", [])
@@ -187,7 +230,7 @@ def expand_steps(
                 for mv in mapping.mappedVerb:
                     if mv not in CANONICAL_VERBS:
                         raise OverlayError(f"Overlay mapped to non-canonical verb: {mv}")
-                    canonical.append({"verb": mv, "args": dict(args)})
+                    annotated_steps.append({"verb": mv, "args": dict(args)})
             else:
                 for stage in pipeline:
                     # stage like { "Make": {"op": "format.compose"} }
@@ -199,7 +242,7 @@ def expand_steps(
                     stage_args = dict(margs or {})
                     # Merge incoming args (author args win)
                     merged_args = {**stage_args, **args}
-                    canonical.append({"verb": mv, "args": merged_args})
+                    annotated_steps.append({"verb": mv, "args": merged_args})
         else:
             mv = mapping.mappedVerb
             if mv not in CANONICAL_VERBS:
@@ -208,17 +251,111 @@ def expand_steps(
             defaults = {k: v for k, v in mapping.mapping.items()
                         if k not in ("mappedVerb", "notes", "pipeline", "capabilities")}
             merged_args = {**defaults, **args}
-            canonical.append({"verb": mv, "args": merged_args})
+            annotated_steps.append({"verb": mv, "args": merged_args})
 
-        lineage.append(ReceiptLineage(
+        lineage_entry = ReceiptLineage(
             rawVerb=raw,
             mappedVerb=mapping.mappedVerb,
             overlayDomain=mapping.overlay,
             overlayVersion=mapping.version,
             capabilityCheck=cap_status
-        ))
+        )
+        lineage.append(lineage_entry)
+        for st in annotated_steps:
+            canonical.append(_annotate_step(st, lineage_entry))
 
     return canonical, lineage, warns
+
+
+def expand_module_ast(
+    module: Dict[str, Any],
+    overlays: Dict[str, OverlayMapping],
+    opts: ExpandOptions
+) -> Tuple[Dict[str, Any], List[str]]:
+    """Expand an author module dict into canonical verbs recursively."""
+
+    warnings: List[str] = []
+
+    def _expand_steps(step_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        canon, _lineage, warns = expand_steps(step_list, overlays, opts)
+        warnings.extend(warns)
+        return [_expand_nested(step) for step in canon]
+
+    def _expand_nested(step: Dict[str, Any]) -> Dict[str, Any]:
+        step = copy.deepcopy(step)
+        args = step.get("args") or {}
+        verb = step.get("verb")
+
+        if verb == "Choose":
+            branches = args.get("branches")
+            if isinstance(branches, list):
+                new_branches = []
+                for branch in branches:
+                    branch_copy = copy.deepcopy(branch)
+                    branch_steps = branch_copy.get("steps") or []
+                    branch_copy["steps"] = _expand_steps(branch_steps)
+                    new_branches.append(branch_copy)
+                args["branches"] = new_branches
+
+        if verb == "Repeat":
+            block = args.get("block")
+            if block is None and isinstance(step.get("block"), dict):
+                block = step.get("block")
+            if block is None and isinstance(step.get("block"), list):
+                block = {"steps": step.get("block")}
+            if isinstance(block, dict):
+                block_copy = copy.deepcopy(block)
+                block_copy["steps"] = _expand_steps(block_copy.get("steps") or [])
+                args["block"] = block_copy
+            elif isinstance(block, list):
+                args["block"] = {"steps": _expand_steps(block)}
+            step.pop("block", None)
+
+        # Generic nested steps handler if a verb embeds sub-steps directly in args
+        if isinstance(args.get("steps"), list):
+            args["steps"] = _expand_steps(args.get("steps") or [])
+
+        step["args"] = args
+        return step
+
+    def _apply(node: Dict[str, Any]) -> Dict[str, Any]:
+        node_copy = copy.deepcopy(node)
+        if isinstance(node_copy.get("flow"), list):
+            node_copy["flow"] = _expand_steps(node_copy.get("flow") or [])
+        if isinstance(node_copy.get("steps"), list) and "flow" not in node_copy:
+            node_copy["steps"] = _expand_steps(node_copy.get("steps") or [])
+        return node_copy
+
+    if module is None:
+        return module, warnings
+
+    if isinstance(module.get("module"), dict):
+        expanded_inner = _apply(module.get("module"))
+        outer = copy.deepcopy(module)
+        outer["module"] = expanded_inner
+        return outer, warnings
+
+    return _apply(module), warnings
+
+
+def expand_modules_doc(
+    doc: Dict[str, Any],
+    overlays: Dict[str, OverlayMapping],
+    opts: ExpandOptions
+) -> Tuple[Dict[str, Any], List[str]]:
+    """Expand every module inside a modules document."""
+
+    warnings: List[str] = []
+    out = copy.deepcopy(doc)
+    modules = out.get("modules")
+    if isinstance(modules, list):
+        expanded_modules = []
+        for module in modules:
+            expanded, warns = expand_module_ast(module, overlays, opts)
+            warnings.extend(warns)
+            expanded_modules.append(expanded)
+        out["modules"] = expanded_modules
+    return out, warnings
 
 # ----------------------------
 # Helper op: xml.firstTitle (for fixture-backed test)

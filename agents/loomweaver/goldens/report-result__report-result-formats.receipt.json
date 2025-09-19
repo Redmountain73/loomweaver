@@ -6,24 +6,41 @@
     "report": "Found paper: Graph Neural Nets",
     "title": "Graph Neural Nets"
   },
-  "logs": [],
+  "logs": [
+    "Found paper: Graph Neural Nets"
+  ],
+  "overlaysLoaded": [
+    "core"
+  ],
   "steps": [
     {
+      "capabilityCheck": "n/a",
       "event": "make",
+      "mappedVerb": "Make",
       "name": "report",
-      "rawVerb": null,
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Make",
       "value": "Found paper: Graph Neural Nets",
       "verb": "Make"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "show",
-      "rawVerb": null,
+      "mappedVerb": "Show",
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Show",
       "value": "Found paper: Graph Neural Nets",
       "verb": "Show"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "return",
-      "rawVerb": null,
+      "mappedVerb": "Return",
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Return",
       "value": "Found paper: Graph Neural Nets",
       "verb": "Return"
     }

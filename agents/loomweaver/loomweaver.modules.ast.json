@@ -76,7 +76,8 @@
         "Never fail silently."
       ],
       "type": "Module",
-      "version": "1.0"
+      "version": "1.0",
+      "tests": []
     },
     {
       "astVersion": "2.1.0",
@@ -142,7 +143,8 @@
         "Output is always one of: \"pass\", \"fail\"."
       ],
       "type": "Module",
-      "version": "1.0"
+      "version": "1.0",
+      "tests": []
     },
     {
       "astVersion": "2.1.0",
@@ -178,7 +180,8 @@
       "purpose": "Echo back a provided name. Stay minimal and deterministic.",
       "successCriteria": [],
       "type": "Module",
-      "version": "1.0"
+      "version": "1.0",
+      "tests": []
     },
     {
       "flow": [
@@ -200,7 +203,16 @@
           "verb": "Return"
         }
       ],
-      "name": "Summarize Title"
+      "name": "Summarize Title",
+      "type": "Module",
+      "astVersion": "2.1.0",
+      "version": "1.0",
+      "purpose": "",
+      "inputs": [],
+      "outputs": [],
+      "tests": [],
+      "successCriteria": [],
+      "examples": []
     },
     {
       "flow": [
@@ -241,7 +253,16 @@
           "verb": "Return"
         }
       ],
-      "name": "Report Result"
+      "name": "Report Result",
+      "type": "Module",
+      "astVersion": "2.1.0",
+      "version": "1.0",
+      "purpose": "",
+      "inputs": [],
+      "outputs": [],
+      "tests": [],
+      "successCriteria": [],
+      "examples": []
     },
     {
       "flow": [
@@ -252,7 +273,7 @@
             "intoStatus": "status",
             "url": "fixture://agents/loomweaver/fixtures/arxiv_minimal.atom.xml"
           },
-          "verb": "Fetch"
+          "verb": "Call"
         },
         {
           "args": {
@@ -299,7 +320,16 @@
           "verb": "Return"
         }
       ],
-      "name": "ArxivAgent E2E"
+      "name": "ArxivAgent E2E",
+      "type": "Module",
+      "astVersion": "2.1.0",
+      "version": "1.0",
+      "purpose": "",
+      "inputs": [],
+      "outputs": [],
+      "tests": [],
+      "successCriteria": [],
+      "examples": []
     }
   ]
 }

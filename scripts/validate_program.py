@@ -8,7 +8,11 @@
 #     --strict: same as default (errors -> nonzero)
 #     --warnings-as-errors: warnings ALSO cause nonzero
 from __future__ import annotations
-import argparse, json, re, sys
+import argparse
+import copy
+import json
+import re
+import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -17,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from src.names import normalize_module_slug  # noqa: E402
+from src.overlays import load_overlays, ExpandOptions, expand_modules_doc  # noqa: E402
 
 try:
     import jsonschema
@@ -136,6 +141,81 @@ def _normalize_combined_instance(combined: dict) -> dict:
     combined["modules"] = [ _normalize_module_obj(m) for m in (combined.get("modules") or []) ]
     return combined
 
+
+def _sanitize_call_step(step: dict) -> dict:
+    step = copy.deepcopy(step)
+    args_obj = step.get("args")
+    if isinstance(args_obj, dict):
+        verb = step.get("verb")
+        if verb == "Call" and not ("module" in args_obj and "inputs" in args_obj):
+            args = dict(args_obj)
+            module_name = args.get("module")
+            if not module_name:
+                if "op" in args:
+                    module_name = f"op:{args['op']}"
+                elif "url" in args:
+                    module_name = "url"
+                else:
+                    module_name = "call"
+            inputs_payload = {}
+            for key, value in list(args.items()):
+                if key in ("module", "inputs", "result"):
+                    continue
+                if key in ("into", "result") and isinstance(value, str):
+                    inputs_payload.setdefault("__result__", value)
+                    continue
+                inputs_payload[key] = value
+            sanitized = {"module": module_name, "inputs": inputs_payload}
+            result_value = inputs_payload.pop("__result__", None) or args.get("result")
+            if isinstance(result_value, str):
+                sanitized["result"] = result_value
+            step["args"] = sanitized
+        for key, value in list(step.get("args", {}).items()):
+            if key == "block" and isinstance(value, dict):
+                value["steps"] = [_sanitize_call_step(s) for s in value.get("steps", [])]
+            elif key == "steps" and isinstance(value, list):
+                step["args"][key] = [_sanitize_call_step(s) for s in value]
+    return step
+
+
+def _schema_safe_modules(doc: dict) -> dict:
+    doc_copy = copy.deepcopy(doc or {})
+    modules = doc_copy.get("modules")
+    if isinstance(modules, list):
+        sanitized = []
+        for module in modules:
+            module_copy = copy.deepcopy(module)
+            if isinstance(module_copy.get("flow"), list):
+                module_copy["flow"] = [_sanitize_call_step(step) for step in module_copy.get("flow", [])]
+            if isinstance(module_copy.get("module"), dict):
+                inner = module_copy.get("module")
+                if isinstance(inner.get("flow"), list):
+                    inner["flow"] = [_sanitize_call_step(step) for step in inner.get("flow", [])]
+            sanitized.append(module_copy)
+        doc_copy["modules"] = sanitized
+    return doc_copy
+
+def _schema_safe_capabilities(program: dict, caps: dict | None) -> dict:
+    cap_root = caps or {}
+    capabilities = cap_root.get("capabilities") if isinstance(cap_root, dict) else {}
+    resources = {
+        "net": bool(capabilities.get("network:fetch")) if isinstance(capabilities, dict) else False,
+        "fs": bool(capabilities.get("fs")) if isinstance(capabilities, dict) else False,
+    }
+    rules = cap_root.get("rules") if isinstance(cap_root, dict) else None
+    if not isinstance(rules, list) or not rules:
+        rules = [{"from": "*", "to": "*", "allow": ["Call"]}]
+    program_name = cap_root.get("programName") if isinstance(cap_root, dict) else None
+    if not isinstance(program_name, str) or not program_name:
+        program_name = str(program.get("name", ""))
+    return {
+        "type": cap_root.get("type", "Capabilities"),
+        "programName": program_name,
+        "rules": rules,
+        "resources": resources,
+    }
+
+
 def main(argv: List[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--program", required=True, help="Program JSON")
@@ -143,6 +223,9 @@ def main(argv: List[str] | None = None) -> int:
     ap.add_argument("--capabilities", required=False, help="Capabilities JSON")
     ap.add_argument("--strict", action="store_true", help="nonzero exit on schema/logic errors")
     ap.add_argument("--warnings-as-errors", action="store_true", help="treat warnings as errors (nonzero exit)")
+    ap.add_argument("--overlay", action="append", default=[], help="Overlay pack to include (repeatable)")
+    ap.add_argument("--no-unknown-verbs", action="store_true", help="Error on verbs without overlay mapping")
+    ap.add_argument("--enforce-capabilities", action="store_true", help="Block missing overlay capabilities")
     args = ap.parse_args(argv)
 
     infos: list[str] = []
@@ -159,9 +242,23 @@ def main(argv: List[str] | None = None) -> int:
         print(f"Failed to read input JSON: {e}")
         return 2
 
+    overlay_warnings: List[str] = []
+    try:
+        overlays = load_overlays(args.overlay)
+        expand_opts = ExpandOptions(
+            overlay_names=list(args.overlay or []),
+            no_unknown_verbs=bool(args.no_unknown_verbs),
+            enforce_capabilities=bool(args.enforce_capabilities),
+        )
+        modules, overlay_warnings = expand_modules_doc(modules, overlays, expand_opts)
+    except Exception as e:
+        errors.append(f"Overlay expansion failed: {e}")
+
+    modules_for_schema = _schema_safe_modules(modules)
+
     # Combine + normalize
     combined = dict(program)
-    combined["modules"] = (modules.get("modules") or [])
+    combined["modules"] = (modules_for_schema.get("modules") or [])
     combined = _normalize_combined_instance(combined)
 
     # Name normalization notes
@@ -188,6 +285,9 @@ def main(argv: List[str] | None = None) -> int:
     if not combined.get("modules"):
         errors.append("Program.modules empty (combined)")
 
+    for warn in overlay_warnings:
+        warnings.append(f"[overlay] {warn}")
+
     # Schema validation (offline)
     if jsonschema is None or Draft202012Validator is None:
         infos.append("jsonschema not installed; run: pip install jsonschema")
@@ -200,10 +300,11 @@ def main(argv: List[str] | None = None) -> int:
             prog_schema["$defs"]["Module"] = mod_schema
             prog_schema = _rewrite_prog_external_refs(prog_schema)
             Draft202012Validator(prog_schema).validate(combined)
-            if caps:
+            if caps is not None:
                 cap_schema = load_json(SCHEMAS / "loom-capabilities.schema.json")
                 cap_schema = _scrub_ids(cap_schema)
-                Draft202012Validator(cap_schema).validate(caps)
+                caps_for_schema = _schema_safe_capabilities(program, caps)
+                Draft202012Validator(cap_schema).validate(caps_for_schema)
         except Exception as e:
             errors.append(f"Schema validation failed: {e}")
 

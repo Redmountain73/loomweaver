@@ -10,39 +10,64 @@
     "title": "Graph Neural Networks: A Tiny Fixture",
     "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<feed xmlns=\"http://www.w3.org/2005/Atom\">\n  <title>arXiv Query Results</title>\n  <updated>2025-01-01T00:00:00Z</updated>\n  <entry>\n    <id>http://arxiv.org/abs/1234.5678v1</id>\n    <title>Graph Neural Networks: A Tiny Fixture</title>\n    <updated>2025-01-01T00:00:00Z</updated>\n    <summary>This is a minimal Atom entry used for deterministic CI tests.</summary>\n    <author><name>Fixture Author</name></author>\n  </entry>\n</feed>\n"
   },
-  "logs": [],
+  "logs": [
+    "Found paper: Graph Neural Networks: A Tiny Fixture"
+  ],
+  "overlaysLoaded": [
+    "core"
+  ],
   "steps": [
     {
       "bytes": 471,
+      "capabilityCheck": "n/a",
       "event": "fetch",
-      "rawVerb": null,
+      "mappedVerb": "Call",
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Call",
       "status": 200,
       "truncated": false,
       "url": "fixture://agents/loomweaver/fixtures/arxiv_minimal.atom.xml",
       "verb": "Call"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "parse",
+      "mappedVerb": "Call",
       "op": "xml.firstTitle",
-      "rawVerb": null,
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Call",
       "verb": "Call"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "make",
+      "mappedVerb": "Make",
       "name": "report",
-      "rawVerb": null,
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Make",
       "value": "Found paper: Graph Neural Networks: A Tiny Fixture",
       "verb": "Make"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "show",
-      "rawVerb": null,
+      "mappedVerb": "Show",
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Show",
       "value": "Found paper: Graph Neural Networks: A Tiny Fixture",
       "verb": "Show"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "return",
-      "rawVerb": null,
+      "mappedVerb": "Return",
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Return",
       "value": "Found paper: Graph Neural Networks: A Tiny Fixture",
       "verb": "Return"
     }
