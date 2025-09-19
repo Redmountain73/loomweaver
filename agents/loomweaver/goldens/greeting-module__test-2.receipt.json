@@ -7,16 +7,27 @@
     "name": ""
   },
   "logs": [],
+  "overlaysLoaded": [
+    "core"
+  ],
   "steps": [
     {
+      "capabilityCheck": "n/a",
       "event": "make",
+      "mappedVerb": "Make",
       "name": "message",
-      "rawVerb": null,
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Make",
       "value": "",
       "verb": "Make"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "choose",
+      "mappedVerb": "Choose",
+      "overlayDomain": null,
+      "overlayVersion": null,
       "predicateTrace": [
         {
           "expr": {
@@ -34,7 +45,7 @@
           "value": true
         }
       ],
-      "rawVerb": null,
+      "rawVerb": "Choose",
       "selected": {
         "branch": 0,
         "kind": "when"
@@ -42,8 +53,12 @@
       "verb": "Choose"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "return",
-      "rawVerb": null,
+      "mappedVerb": "Return",
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Return",
       "value": "anonymous user",
       "verb": "Return"
     }

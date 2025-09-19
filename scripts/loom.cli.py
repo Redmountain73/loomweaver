@@ -56,6 +56,8 @@ def cmd_test(args: argparse.Namespace) -> int:
         cmd.append("--strict")
     if args.snapshot:
         cmd.append("--snapshot")
+    if args.update_goldens:
+        cmd.append("--update-goldens")
     for name in overlays:
         cmd.extend(["--overlay", name])
     if args.no_unknown_verbs:
@@ -95,6 +97,7 @@ def main() -> int:
     ap_test = sub.add_parser("test", help="run loomweaver module tests")
     ap_test.add_argument("--strict", action="store_true", help="fail on any mismatch")
     ap_test.add_argument("--snapshot", action="store_true", help="(re)write golden receipts")
+    ap_test.add_argument("--update-goldens", action="store_true", help="Refresh stored golden receipts")
     ap_test.add_argument("--overlay", action="append", default=[], help="Overlay pack to include (repeatable)")
     ap_test.add_argument("--no-unknown-verbs", action="store_true")
     ap_test.add_argument("--enforce-capabilities", action="store_true")

@@ -6,9 +6,16 @@
     "score": 42
   },
   "logs": [],
+  "overlaysLoaded": [
+    "core"
+  ],
   "steps": [
     {
+      "capabilityCheck": "n/a",
       "event": "choose",
+      "mappedVerb": "Choose",
+      "overlayDomain": null,
+      "overlayVersion": null,
       "predicateTrace": [
         {
           "expr": {
@@ -26,20 +33,28 @@
           "value": false
         }
       ],
-      "rawVerb": null,
+      "rawVerb": "Choose",
       "selected": null,
       "verb": "Choose"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "return",
-      "rawVerb": null,
+      "mappedVerb": "Return",
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Return",
       "value": "fail",
       "verb": "Return"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "choose",
+      "mappedVerb": "Choose",
+      "overlayDomain": null,
+      "overlayVersion": null,
       "predicateTrace": [],
-      "rawVerb": null,
+      "rawVerb": "Choose",
       "selected": {
         "branch": 1,
         "kind": "otherwise"

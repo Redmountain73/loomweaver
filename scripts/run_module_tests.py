@@ -102,6 +102,7 @@ def main() -> int:
     ap.add_argument("--golden-dir", required=True)
     ap.add_argument("--strict", action="store_true")
     ap.add_argument("--snapshot", action="store_true")
+    ap.add_argument("--update-goldens", action="store_true")
     ap.add_argument("--overlay", action="append", default=[], help="Overlay pack to include (repeatable)")
     ap.add_argument("--no-unknown-verbs", action="store_true", help="Error on verbs without overlay mapping")
     ap.add_argument("--enforce-capabilities", action="store_true", help="Block missing overlay capabilities")
@@ -148,7 +149,7 @@ def main() -> int:
         golden_dir = Path(args.golden_dir)
         got_receipt = interp.receipt
 
-        if args.snapshot:
+        if args.snapshot or args.update_goldens:
             write_golden_receipt(golden_dir, module_slug, test_name, got_receipt)
             receipt_ok = True
         else:

@@ -6,9 +6,16 @@
     "score": 95
   },
   "logs": [],
+  "overlaysLoaded": [
+    "core"
+  ],
   "steps": [
     {
+      "capabilityCheck": "n/a",
       "event": "choose",
+      "mappedVerb": "Choose",
+      "overlayDomain": null,
+      "overlayVersion": null,
       "predicateTrace": [
         {
           "expr": {
@@ -26,7 +33,7 @@
           "value": true
         }
       ],
-      "rawVerb": null,
+      "rawVerb": "Choose",
       "selected": {
         "branch": 0,
         "kind": "when"
@@ -34,8 +41,12 @@
       "verb": "Choose"
     },
     {
+      "capabilityCheck": "n/a",
       "event": "return",
-      "rawVerb": null,
+      "mappedVerb": "Return",
+      "overlayDomain": null,
+      "overlayVersion": null,
+      "rawVerb": "Return",
       "value": "pass",
       "verb": "Return"
     }
