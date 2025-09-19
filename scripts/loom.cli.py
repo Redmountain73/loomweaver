@@ -26,6 +26,7 @@ def run(cmd: list[str]) -> int:
 
 def cmd_validate(args: argparse.Namespace) -> int:
     validate_py = ROOT / "scripts" / "validate_program.py"
+    overlays = list(args.overlay or ["research"])
     cmd = [
         sys.executable, str(validate_py),
         "--program", str(DEFAULT_PROGRAM),
@@ -34,7 +35,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
     ]
     if args.strict:
         cmd.append("--strict")
-    for name in args.overlay:
+    for name in overlays:
         cmd.extend(["--overlay", name])
     if args.no_unknown_verbs:
         cmd.append("--no-unknown-verbs")
@@ -44,6 +45,7 @@ def cmd_validate(args: argparse.Namespace) -> int:
 
 def cmd_test(args: argparse.Namespace) -> int:
     tests_py = ROOT / "scripts" / "run_module_tests.py"
+    overlays = list(args.overlay or [])
     cmd = [
         sys.executable, str(tests_py),
         "--modules", str(DEFAULT_MODULES),
@@ -54,7 +56,7 @@ def cmd_test(args: argparse.Namespace) -> int:
         cmd.append("--strict")
     if args.snapshot:
         cmd.append("--snapshot")
-    for name in args.overlay:
+    for name in overlays:
         cmd.extend(["--overlay", name])
     if args.no_unknown_verbs:
         cmd.append("--no-unknown-verbs")
@@ -64,6 +66,7 @@ def cmd_test(args: argparse.Namespace) -> int:
 
 def cmd_run(args: argparse.Namespace) -> int:
     run_py = ROOT / "scripts" / "run_ast_module.py"
+    overlays = list(args.overlay or [])
     cmd = [
         sys.executable, str(run_py),
         "--modules", str(DEFAULT_MODULES),
@@ -71,7 +74,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     ]
     if args.enforce_capabilities:
         cmd.append("--enforce-capabilities")
-    for name in args.overlay:
+    for name in overlays:
         cmd.extend(["--overlay", name])
     if args.no_unknown_verbs:
         cmd.append("--no-unknown-verbs")
